@@ -1,9 +1,8 @@
 /**
  * Apps Script che riceve le risposte della web app VAD e le scrive nel Google Sheet.
  *
- * Le risposte arrivano a "lotti": la web app invia una richiesta POST (JSON) alla fine
- * di ogni storia, con le frasi di quella storia e lo stato d'animo registrato prima,
- * più un ultimo lotto con lo stato d'animo finale. Ogni lotto diventa:
+ * Le risposte arrivano a "lotti": la web app invia una richiesta POST (JSON) subito dopo
+ * ogni risposta, cioè dopo il voto di ogni frase e dopo ogni stato d'animo. Ogni lotto diventa:
  *  - N righe nel foglio "risposte": una riga per ogni frase valutata (valenza, arousal);
  *    la colonna "dominanza" resta per compatibilità con i dati già raccolti, ma ora è vuota;
  *  - M righe nel foglio "umore": una riga per ogni rilevazione dello stato d'animo
@@ -12,6 +11,11 @@
  * Le due web app (solo testi / testi + immagini) scrivono negli stessi fogli:
  * la colonna "versione" dice da quale arriva la riga, la colonna "immagine"
  * il codice dell'immagine mostrata con la frase (es. "IAPS 1050", "OASIS Snake 3").
+ *
+ * Oltre ai voti, per ogni frase e ogni stato d'animo arrivano le misure di risposta
+ * (colonne in fondo, vedi COLONNE_MISURE): tempo della prima scelta per valenza e arousal,
+ * prima figura scelta, numero di cambi, pressioni di "Indietro", aperture del pulsante (i),
+ * e pagina_nascosta = 1 se durante la risposta la persona è passata ad altra scheda o app.
  *
  * Il foglio "lotti" tiene l'elenco dei lotti già scritti: se lo stesso lotto arriva due
  * volte (per esempio perché la risposta di conferma si è persa e la pagina lo rimanda),
@@ -23,12 +27,19 @@
  * Versione: Nuova versione → Distribuisci (l'URL /exec resta lo stesso).
  */
 
+// Misure di risposta: aggiunte in fondo a "risposte" e "umore" (stessi nomi usati dalla web app).
+// I fogli creati con la versione precedente ricevono le colonne nuove in automatico.
+const COLONNE_MISURE = [
+  "rt_valenza_ms", "rt_arousal_ms", "prima_valenza", "prima_arousal",
+  "cambi_valenza", "cambi_arousal", "n_indietro", "n_info", "pagina_nascosta"
+];
+
 const NOME_FOGLIO = "risposte";
 const INTESTAZIONE = [
   "ricevuto", "sessione", "inizio", "fine", "ordine_storia", "id_storia",
   "n_frase", "frase", "valenza", "arousal", "dominanza", "tempo_ms", "user_agent",
   "versione", "immagine"
-];
+].concat(COLONNE_MISURE);
 
 // Registro dei lotti già scritti (serve a scartare gli invii doppi)
 const NOME_FOGLIO_LOTTI = "lotti";
@@ -40,7 +51,7 @@ const INTESTAZIONE_UMORE = [
   "ricevuto", "sessione", "momento", "ordine_storia", "id_storia_precedente",
   "id_storia_successiva", "pausa_s", "valenza", "arousal", "tempo_ms", "user_agent",
   "versione"
-];
+].concat(COLONNE_MISURE);
 
 // Restituisce il foglio richiesto, creandolo con l'intestazione se non esiste.
 function foglio_(nome, intestazione) {
@@ -73,6 +84,17 @@ function voto_(v) {
 // Dominanza: non più richiesta dalla web app; se manca la cella resta vuota.
 function votoFacoltativo_(v) {
   return (v === undefined || v === null || v === "") ? "" : voto_(v);
+}
+
+// Numero (anche 0) oppure cella vuota: per le misure, dove 0 è un valore valido
+// (es. 0 cambi), a differenza di Number(x) || "" che trasformerebbe 0 in vuoto.
+function numero_(v) {
+  if (v === undefined || v === null || v === "") return "";
+  const n = Number(v);
+  return isFinite(n) ? n : "";
+}
+function misure_(r) {
+  return COLONNE_MISURE.map(function (k) { return numero_(r[k]); });
 }
 
 // Testo "pulito": tronca i campi lunghi ed evita che una cella venga
@@ -129,7 +151,7 @@ function doPost(e) {
         testo_(d.user_agent, 300),
         testo_(d.versione || "testi", 20),
         testo_(r.immagine, 200)
-      ];
+      ].concat(misure_(r));
     });
     const righeUmore = umore.map(function (u) {
       return [
@@ -145,7 +167,7 @@ function doPost(e) {
         Number(u.tempo_ms) || "",
         testo_(d.user_agent, 300),
         testo_(d.versione || "testi", 20)
-      ];
+      ].concat(misure_(u));
     });
 
     scrivi_(foglio_(NOME_FOGLIO, INTESTAZIONE), righe, INTESTAZIONE.length);
@@ -162,5 +184,5 @@ function doPost(e) {
 // Aprendo l'URL /exec nel browser si vede questo messaggio: utile per controllare
 // che la distribuzione funzioni.
 function doGet() {
-  return json_({ ok: true, messaggio: "Web app VAD attiva (protocollo A, invio a lotti). Le risposte arrivano via POST." });
+  return json_({ ok: true, messaggio: "Web app VAD attiva (protocollo A, invio a lotti, misure di risposta). Le risposte arrivano via POST." });
 }

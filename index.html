@@ -100,7 +100,16 @@ ol.steps { margin: 0; padding-left: 1.3rem; display: grid; gap: 6px; }
 .scales { display: grid; gap: 18px; }
 .scale { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; min-width: 0; }
 .scale legend { padding: 0; font-weight: 600; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
-.scale legend small { display: block; font-weight: 400; color: var(--muted); line-height: 1.45; }
+.scale legend small { display: block; font-weight: 400; color: var(--muted); line-height: 1.45; flex-basis: 100%; }
+/* pulsante (i) accanto a ogni domanda e riquadro con il criterio di valutazione */
+.info { flex: none; width: 1.6rem; height: 1.6rem; padding: 0; border-radius: 50%; border: 1.5px solid var(--c, var(--accent));
+        background: transparent; color: var(--c, var(--accent)); font: italic 600 .9rem/1 var(--font-read); cursor: pointer;
+        display: inline-grid; place-items: center; align-self: center; }
+.info[aria-expanded="true"] { background: var(--c, var(--accent)); color: var(--surface); }
+.info:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.tip { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--c, var(--accent)); border-radius: 8px;
+       padding: 10px 12px; font-size: .9rem; line-height: 1.5; display: grid; gap: 6px; }
+.tip ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 2px; }
 .scale .opts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
 .scale input { position: absolute; opacity: 0; pointer-events: none; }
 .scale label { display: grid; justify-items: center; align-content: end; gap: 2px; padding: 3px 1px 3px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg); font: 600 .8rem var(--font-mono); cursor: pointer; user-select: none; transition: background .15s, border-color .15s, color .15s; }
@@ -4037,14 +4046,15 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     <section class="block" aria-labelledby="h-cosa">
       <h2 id="h-cosa">Cosa devi fare</h2>
       <ol class="steps">
+        <li>Per prendere confidenza con le domande, farai prima una <b>frase di prova</b>: la sua risposta non viene salvata.</li>
         <li>Prima di iniziare ti chiederemo <b>come ti senti in questo momento</b>, con due scale: valenza e arousal.</li>
         <li>Ogni storia è breve e viene mostrata <b>una frase alla volta</b>. Sullo schermo compare solo la frase da leggere: leggila con attenzione.</li>
         <li>Subito dopo compaiono le due scale, <b>una alla volta</b>: prima <b>valenza</b>, poi <b>arousal</b>. Per ognuna tocca la figura che rappresenta meglio come ti ha fatto sentire <b>tu</b> quella frase, non come si sentono i personaggi.</li>
-        <li>Dopo aver scelto la figura dell'arousal si passa <b>automaticamente</b> alla frase successiva. Il voto va dato <b>per ogni frase</b>, non solo alla fine della storia. Se tocchi una figura per sbaglio, usa <b>Indietro</b> per correggere.</li>
+        <li>Dopo aver scelto la figura dell'arousal si passa <b>automaticamente</b> alla frase successiva. Il voto va dato <b>per ogni frase</b>, non solo alla fine della storia. Se tocchi una figura per sbaglio, usa <b>Indietro</b> per correggere. Accanto a ogni domanda c'è il pulsante <b>i</b>: passaci sopra o toccalo per rileggere cosa significa.</li>
         <li>Finita una storia c'è una <b>pausa di 20 secondi</b>, con un timer sullo schermo: rilassati e lascia andare la storia appena letta. Alla fine della pausa ti chiederemo di nuovo come ti senti, e poi inizia la storia successiva, fino a completare tutte e 10.</li>
         <li>Ogni risposta viene salvata <b>subito dopo averla data</b>. Se chiudi la pagina per sbaglio, riaprila dallo <b>stesso dispositivo e browser</b>: ripartirai dal punto in cui eri rimasto.</li>
       </ol>
-      <p class="note">Non ci sono risposte giuste o sbagliate: conta quello che provi. Ci vogliono circa 15–20 minuti. Una volta confermato un voto non si può tornare indietro.</p>
+      <p class="note">Non ci sono risposte giuste o sbagliate: conta quello che provi. Ci vogliono circa 15–20 minuti. Una volta confermato un voto non si può tornare indietro. Oltre ai voti registriamo, in forma anonima, i tempi di risposta e le eventuali correzioni.</p>
     </section>
 
     <section class="block riprendi" id="riprendi" hidden>
@@ -4085,6 +4095,23 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
         <span class="hint" id="hint">Domanda 1 di 2</span>
       </div>
     </form>
+  </div>
+
+  <!-- 1b. RISCONTRO DELLA FRASE DI PROVA (non salvata) -->
+  <div id="s-prova" class="wrap" style="padding:0" hidden>
+    <header style="display:grid;gap:10px">
+      <p class="eyebrow">Frase di prova completata</p>
+      <h2>Ecco come funziona</h2>
+      <p class="lead" id="prova-esito"></p>
+    </header>
+    <div class="istruzioni">
+      <p>Non esiste una risposta giusta: un'altra persona potrebbe sentirsi in modo diverso, e va benissimo così. Conta solo come ti ha fatto sentire <b>tu</b> la frase.</p>
+      <p>Nello studio farai lo stesso per <b>ogni frase</b>. Se hai un dubbio su una domanda, usa il pulsante <b>i</b> accanto al suo titolo.</p>
+    </div>
+    <div class="row">
+      <button class="btn" id="b-prova-ok" type="button">Inizia lo studio</button>
+      <button class="btn ghost" id="b-prova-rifai" type="button">Rifai la prova</button>
+    </div>
   </div>
 
   <!-- 2b. PAUSA TRA UNA STORIA E L'ALTRA (protocollo A) -->
@@ -4138,6 +4165,11 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   const PAUSA_S = 20;            // protocollo A: secondi di pausa dopo ogni storia
   const DIMENSIONI = ["valenza", "arousal"];   // la dominanza non si chiede più
   const CHIAVE_STATO = "vad_stato_" + VERSIONE;  // sessione in corso salvata nel browser
+  // frase di prova mostrata prima dello studio: la risposta NON viene salvata
+  const FRASE_PROVA = "Mentre torno a casa inizia a piovere forte e mi accorgo di aver dimenticato l'ombrello.";
+  // misure registrate per ogni frase e ogni stato d'animo, oltre ai voti (stesse colonne nel foglio)
+  const COLONNE_MISURE = ["rt_valenza_ms", "rt_arousal_ms", "prima_valenza", "prima_arousal",
+                          "cambi_valenza", "cambi_arousal", "n_indietro", "n_info", "pagina_nascosta"];
 
   // ---------- dati ----------
   let POOL = [];
@@ -4186,7 +4218,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     inizio: null,
     fine: null,
     storie: [],
-    risposte: [],  // {ordine, id_storia, n_frase, frase, valenza, arousal, immagine, tempo_ms}
+    risposte: [],  // {ordine, id_storia, n_frase, frase, valenza, arousal, immagine, tempo_ms, + COLONNE_MISURE}
     umore: []      // stato d'animo (protocollo A): {momento, ordine_storia, id_storia_precedente, id_storia_successiva, pausa_s, valenza, arousal, tempo_ms}
   };
   let idx = 0, fidx = 0, tStart = 0;   // idx = storia corrente, fidx = frase corrente
@@ -4250,32 +4282,136 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     SCALE.forEach((f, i) => { if (testi[i]) f.querySelector("legend small").textContent = testi[i]; });
   }
 
+  // ---------- misure di risposta ----------
+  // Per ogni frase (e ogni stato d'animo) si registrano, oltre al voto finale:
+  //  - rt_<dim>_ms: tempo dalla comparsa della scala alla PRIMA scelta (tempo di risposta)
+  //  - prima_<dim>: la prima figura scelta, e cambi_<dim>: quante volte la scelta è cambiata dopo
+  //    (correzioni subito dopo il tocco, oppure tornando con "Indietro") → marker di incertezza
+  //  - n_indietro: quante volte è stato premuto "Indietro"; n_info: quante volte è stato aperto (i)
+  //  - pagina_nascosta: 1 se durante la risposta la persona è passata a un'altra scheda o app
+  //    (in quel caso i tempi non sono affidabili e conviene escluderli dalle analisi)
+  let misura = null;
+  function nuovaMisura() {
+    misura = { n_indietro: 0, n_info: 0, nascosta: document.hidden ? 1 : 0, dim: {} };
+    for (const d of DIMENSIONI) misura.dim[d] = { mostrata: null, rt: null, prima: null, ultima: null, cambi: 0 };
+  }
+  function campiMisura() {
+    const o = {};
+    for (const d of DIMENSIONI) {
+      const m = misura.dim[d];
+      o["rt_" + d + "_ms"] = m.rt == null ? "" : m.rt;
+      o["prima_" + d] = m.prima == null ? "" : m.prima;
+      o["cambi_" + d] = m.cambi;
+    }
+    o.n_indietro = misura.n_indietro; o.n_info = misura.n_info; o.pagina_nascosta = misura.nascosta;
+    return o;
+  }
+  // ogni scelta su una scala aggiorna le misure (anche quelle fatte durante il breve ritardo prima di cambiare scala)
+  form.addEventListener("change", e => {
+    const m = misura && misura.dim[e.target.name];
+    if (!m) return;
+    const v = Number(e.target.value);
+    if (m.prima == null) { m.prima = v; m.rt = Math.round(performance.now() - (m.mostrata == null ? tStart : m.mostrata)); }
+    else if (v !== m.ultima) m.cambi++;
+    m.ultima = v;
+  });
+  document.addEventListener("visibilitychange", () => { if (document.hidden && misura) misura.nascosta = 1; });
+
+  // ---------- pulsante (i): criterio di valutazione di ogni domanda ----------
+  // Su computer si apre passandoci sopra col mouse (e si chiude uscendo); un clic lo tiene aperto.
+  // Su telefono si apre e si chiude toccandolo. Il riquadro compare sotto il titolo della domanda.
+  // (ogni pezzo di testo sta in un <p>: il riquadro è una griglia e il testo "sciolto" verrebbe spezzato)
+  const CRITERI = {
+    valenza: "<p><b>Valenza</b>: quanto ti senti bene o male. Riguarda solo la piacevolezza, non l'intensità.</p>" +
+      "<ul><li><b>1</b> = molto spiacevole (triste, spaventato, infastidito)</li>" +
+      "<li><b>3</b> = neutro: né piacevole né spiacevole, oppure nessun effetto</li>" +
+      "<li><b>5</b> = molto piacevole (contento, sereno, divertito)</li></ul>" +
+      "<p>Dopo una frase, valuta come ha fatto sentire <b>te</b>, non i personaggi.</p>",
+    arousal: "<p><b>Arousal</b>: quanto ti senti attivato, indipendentemente dal fatto che l'emozione sia piacevole o spiacevole.</p>" +
+      "<ul><li><b>1</b> = molto calmo, rilassato o indifferente</li>" +
+      "<li><b>3</b> = moderatamente attivato</li>" +
+      "<li><b>5</b> = molto agitato, eccitato o in allerta</li></ul>" +
+      "<p>Esempi: una bella notizia che rilassa → valenza alta, arousal basso; un pericolo improvviso → valenza bassa, arousal alto.</p>"
+  };
+  const PUO_HOVER = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const INFO = [];   // {btn, tip, fissato}
+  function apriInfo(x, aperto) {
+    if (aperto && x.tip.hidden && misura) misura.n_info++;
+    x.tip.hidden = !aperto;
+    x.btn.setAttribute("aria-expanded", aperto ? "true" : "false");
+  }
+  function chiudiInfo() { INFO.forEach(x => { x.fissato = false; apriInfo(x, false); }); }
+  SCALE.forEach(f => {
+    const dim = f.querySelector(".opts").dataset.name;
+    const leg = f.querySelector("legend");
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.className = "info"; btn.textContent = "i";
+    btn.setAttribute("aria-label", "Cosa significa " + dim + "?");
+    const tip = document.createElement("div");
+    tip.className = "tip"; tip.id = "tip-" + dim; tip.hidden = true; tip.innerHTML = CRITERI[dim] || "";
+    btn.setAttribute("aria-controls", tip.id); btn.setAttribute("aria-expanded", "false");
+    leg.insertBefore(btn, leg.querySelector("small"));
+    leg.after(tip);
+    const x = { btn, tip, fissato: false };
+    INFO.push(x);
+    let attesa = 0;
+    if (PUO_HOVER) {
+      // piccolo ritardo: passare sopra al pulsante per sbaglio non apre il riquadro
+      btn.addEventListener("mouseenter", () => { attesa = setTimeout(() => apriInfo(x, true), 150); });
+      btn.addEventListener("mouseleave", () => { clearTimeout(attesa); if (!x.fissato) apriInfo(x, false); });
+    }
+    btn.addEventListener("click", () => { clearTimeout(attesa); x.fissato = !x.fissato || tip.hidden; apriInfo(x, x.fissato); });
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") chiudiInfo(); });
+
   function mostraScala() {
     SCALE.forEach(f => { f.hidden = f !== attive[step]; });
     $("hint").textContent = "Domanda " + (step + 1) + " di " + attive.length;
     $("b-back").hidden = step === 0;
+    chiudiInfo();
+    // momento in cui la scala compare per la prima volta: da qui parte il tempo di risposta
+    const d = attive[step].querySelector(".opts").dataset.name;
+    if (misura && misura.dim[d] && misura.dim[d].mostrata == null) misura.dim[d].mostrata = performance.now();
   }
 
-  form.addEventListener("change", e => {
-    // reagisce solo alla scala visibile, e una volta sola per scelta
+  // passa alla scala successiva (o registra la risposta) dopo una scelta sulla scala visibile
+  function avanza(nome) {
     const dimVisibile = attive[step].querySelector(".opts").dataset.name;
-    if (inAvanzamento || e.target.name !== dimVisibile) return;
+    if (inAvanzamento || nome !== dimVisibile) return;   // una volta sola per scelta
     inAvanzamento = true;
     setTimeout(() => {
       inAvanzamento = false;
       if (step < attive.length - 1) { step++; mostraScala(); }
       else if (fase === "umore") registraUmore();   // dopo l'arousal: inizia la storia (o fine)
+      else if (fase === "prova") esitoProva();      // frase di prova: riscontro, niente salvataggio
       else registra();                               // dopo l'arousal: frase successiva o pausa
     }, RITARDO_MS);
+  }
+  form.addEventListener("change", e => avanza(e.target.name));
+
+  // Toccare di nuovo la figura già scelta (per esempio dopo "Indietro") conferma la scelta e va avanti.
+  // Serve perché il browser non genera "change" se il valore non cambia: senza questo, chi torna
+  // indietro e vuole tenere la stessa risposta resterebbe bloccato.
+  let giaScelta = false;
+  form.addEventListener("pointerdown", e => {
+    const lab = e.target.closest && e.target.closest(".opts label");
+    const inp = lab && document.getElementById(lab.htmlFor);
+    giaScelta = !!(inp && inp.checked);
+  });
+  form.addEventListener("click", e => {
+    if (e.target.type !== "radio") return;
+    if (giaScelta) avanza(e.target.name);
+    giaScelta = false;
   });
 
   $("b-back").addEventListener("click", () => {
     if (inAvanzamento || step === 0) return;
+    if (misura) misura.n_indietro++;
     step--; mostraScala();       // la scelta precedente resta selezionata e si può cambiare
   });
 
   function show(screen) {
-    for (const s of ["s-intro", "s-story", "s-pausa", "s-end"]) $(s).hidden = s !== screen;
+    for (const s of ["s-intro", "s-story", "s-prova", "s-pausa", "s-end"]) $(s).hidden = s !== screen;
     window.scrollTo({ top: 0 });
   }
 
@@ -4312,6 +4448,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     $("p-pct").textContent = pct + "%";
     $("p-bar").style.width = pct + "%";
     form.reset();
+    nuovaMisura();
     step = 0; mostraScala();
     // Dopo la prima frase di una storia la pagina torna su al riquadro della storia:
     // sul telefono il riquadro può essere fuori schermo e il cambio di frase passerebbe inosservato.
@@ -4325,8 +4462,42 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     fase_ = "frase"; salvaStato();
   }
 
+  // ---------- frase di prova (prima dello studio, non salvata) ----------
+  function avviaProva() {
+    show("s-story");
+    const box = $("story-text");
+    box.textContent = ""; box.className = "story";
+    const span = document.createElement("span");
+    span.className = "now"; span.textContent = FRASE_PROVA;
+    box.append(span);
+    fase = "prova"; attive = SCALE; impostaDomande(DOMANDE_FRASE);
+    $("p-label").textContent = "Frase di prova · questa risposta non viene salvata";
+    $("p-pct").textContent = ""; $("p-bar").style.width = "0%";
+    form.reset();
+    nuovaMisura();
+    step = 0; mostraScala();
+    tStart = performance.now();
+  }
+  // descrizione a parole delle risposte date alla prova
+  const DESCR = {
+    valenza: ["molto male", "un po' male", "né bene né male", "un po' bene", "molto bene"],
+    arousal: ["molto calmo o indifferente", "abbastanza calmo", "né calmo né agitato", "abbastanza attivato", "molto attivato o agitato"]
+  };
+  function esitoProva() {
+    const v = valori();
+    if (v.valenza == null || v.arousal == null) return;
+    $("prova-esito").innerHTML = "Hai indicato che la frase ti ha fatto sentire <b>" + DESCR.valenza[v.valenza - 1] +
+      "</b> (valenza " + v.valenza + ") e <b>" + DESCR.arousal[v.arousal - 1] + "</b> (arousal " + v.arousal + ").";
+    show("s-prova");
+  }
   $("b-start").addEventListener("click", () => {
     if (POOL.length === 0) { $("pool-info").textContent = "Nessuna storia caricata nel dataset."; return; }
+    avviaProva();
+  });
+  $("b-prova-rifai").addEventListener("click", avviaProva);
+
+  // inizio dello studio vero, dopo la prova
+  $("b-prova-ok").addEventListener("click", () => {
     sessione.storie = estrai(POOL, N_STORIE);
     sessione.inizio = new Date().toISOString();
     idx = 0; fidx = 0; fatte = 0; coda = []; nLotto = 0; umoreInviato = 0;
@@ -4350,6 +4521,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     $("p-label").textContent = idx < n ? "Prima della storia " + (idx + 1) + " di " + n + " · il tuo stato d'animo"
                                        : "Fine · il tuo stato d'animo";
     form.reset();
+    nuovaMisura();
     step = 0; mostraScala();
     tStart = performance.now();
     fase_ = "umore"; salvaStato();
@@ -4366,7 +4538,8 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       id_storia_successiva: idx < n ? sessione.storie[idx].id : "",
       pausa_s: idx > 0 ? Math.round(pausaMisurata * 10) / 10 : 0,
       valenza: v.valenza, arousal: v.arousal,
-      tempo_ms: Math.round(performance.now() - tStart)
+      tempo_ms: Math.round(performance.now() - tStart),
+      ...campiMisura()
     });
     accodaLotto([]);                                 // anche lo stato d'animo parte subito
     inviaCoda();
@@ -4405,7 +4578,8 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       ordine: idx + 1, id_storia: s.id, n_frase: fidx + 1, frase: s.frasi[fidx],
       valenza: v.valenza, arousal: v.arousal,
       immagine: (s.codici && s.codici[fidx]) || (s.immagini && s.immagini[fidx]) || "",
-      tempo_ms: Math.round(performance.now() - tStart)
+      tempo_ms: Math.round(performance.now() - tStart),
+      ...campiMisura()
     });
     fatte++;
     fidx++;
@@ -4417,11 +4591,11 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   }
 
   // ---------- CSV ----------
-  const HEADER = ["tipo", "sessione", "inizio", "fine", "ordine_storia", "id_storia", "n_frase", "frase", "valenza", "arousal", "tempo_ms", "momento", "id_storia_precedente", "pausa_s", "versione", "immagine"];
+  const HEADER = ["tipo", "sessione", "inizio", "fine", "ordine_storia", "id_storia", "n_frase", "frase", "valenza", "arousal", "tempo_ms", "momento", "id_storia_precedente", "pausa_s", "versione", "immagine"].concat(COLONNE_MISURE);
   const q = x => { const s = String(x ?? ""); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
   function righeSessione(ses) {
-    const frasi = ses.risposte.map(r => ["frase", ses.id, ses.inizio, ses.fine, r.ordine, r.id_storia, r.n_frase, r.frase, r.valenza, r.arousal, r.tempo_ms, "", "", "", VERSIONE, r.immagine || ""]);
-    const umore = (ses.umore || []).map(u => ["umore", ses.id, ses.inizio, ses.fine, u.ordine_storia, u.id_storia_successiva, "", "", u.valenza, u.arousal, u.tempo_ms, u.momento, u.id_storia_precedente, u.pausa_s, VERSIONE, ""]);
+    const frasi = ses.risposte.map(r => ["frase", ses.id, ses.inizio, ses.fine, r.ordine, r.id_storia, r.n_frase, r.frase, r.valenza, r.arousal, r.tempo_ms, "", "", "", VERSIONE, r.immagine || ""].concat(COLONNE_MISURE.map(k => r[k] ?? "")));
+    const umore = (ses.umore || []).map(u => ["umore", ses.id, ses.inizio, ses.fine, u.ordine_storia, u.id_storia_successiva, "", "", u.valenza, u.arousal, u.tempo_ms, u.momento, u.id_storia_precedente, u.pausa_s, VERSIONE, ""].concat(COLONNE_MISURE.map(k => u[k] ?? "")));
     return frasi.concat(umore);
   }
   function toCSV(rows) { return [HEADER, ...rows].map(r => r.map(q).join(",")).join("\n"); }
@@ -4461,20 +4635,28 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     if (!out.ok) throw new Error(out.error || "errore sconosciuto");
   }
 
-  // invia i lotti in coda uno alla volta, nell'ordine; restituisce true se la coda è vuota
-  let inInvio = null;
+  // invia i lotti in coda uno alla volta, nell'ordine; restituisce true se la coda è vuota.
+  // Un lotto che non passa (rete assente o rifiutato dal foglio) resta in coda per il
+  // tentativo successivo, ma NON blocca l'invio dei lotti che lo seguono.
+  let inInvio = null, ancora = false;
   function inviaCoda() {
     if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("script.google.com") === -1) return Promise.resolve(false);
-    if (inInvio) return inInvio;                     // un solo invio alla volta
+    if (inInvio) { ancora = true; return inInvio; }  // un solo invio alla volta; se ne arrivano altri, si ripassa
     inInvio = (async () => {
       try {
-        while (coda.length) {
-          await inviaLotto(coda[0]);
-          coda.shift(); salvaStato();                // tolto dalla coda solo dopo la conferma
-        }
-        return true;
-      } catch (e) { return false; }
-      finally { inInvio = null; }
+        do {
+          ancora = false;
+          for (const l of coda.slice()) {
+            try {
+              await inviaLotto(l);
+              coda = coda.filter(x => x !== l); salvaStato();   // tolto dalla coda solo dopo la conferma
+            } catch (e) {
+              console.warn("Invio non riuscito per il lotto " + l.lotto + ": " + (e && e.message || e));
+            }
+          }
+        } while (ancora);
+        return coda.length === 0;
+      } finally { inInvio = null; }
     })();
     return inInvio;
   }

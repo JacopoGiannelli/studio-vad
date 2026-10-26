@@ -8,13 +8,33 @@ Online su GitHub Pages: https://jacopogiannelli.github.io/studio-vad/
 
 ## Protocollo
 
+0. Frase di prova (non salvata) con riscontro sulle risposte date, ripetibile.
 1. Stato d'animo iniziale (valenza, arousal).
 2. 10 storie estratte a caso; ogni frase compare da sola e si valuta con due scale SAM
    (valenza, arousal), una alla volta.
 3. Dopo ogni storia: pausa obbligatoria di 20 s con timer, poi di nuovo lo stato d'animo.
 4. Stato d'animo finale.
 
-Parametri modificabili in cima allo script di `index.html`: `N_STORIE`, `PAUSA_S`, `APPS_SCRIPT_URL`.
+Accanto a ogni domanda c'è un pulsante **(i)** che riassume il criterio di valutazione
+(si apre col mouse sopra o toccandolo). Toccare di nuovo la figura già scelta, dopo
+"Indietro", conferma la scelta e va avanti.
+
+Parametri modificabili in cima allo script di `index.html`: `N_STORIE`, `PAUSA_S`, `APPS_SCRIPT_URL`, `FRASE_PROVA`.
+
+## Misure di risposta
+
+Per ogni frase e ogni stato d'animo, oltre ai voti, vengono salvate (colonne in fondo ai fogli):
+
+| colonna | significato |
+|---|---|
+| `rt_valenza_ms`, `rt_arousal_ms` | tempo dalla comparsa della scala alla **prima** scelta |
+| `prima_valenza`, `prima_arousal` | prima figura scelta (il voto finale è in `valenza`/`arousal`) |
+| `cambi_valenza`, `cambi_arousal` | quante volte la scelta è cambiata dopo la prima (marker di incertezza) |
+| `n_indietro` | pressioni del pulsante "Indietro" |
+| `n_info` | aperture del pulsante (i) |
+| `pagina_nascosta` | 1 se durante la risposta si è passati ad altra scheda/app (tempi non affidabili) |
+
+`tempo_ms` resta il tempo totale dalla comparsa della frase al voto finale di arousal.
 
 ## Salvataggio dei dati e ripresa della sessione
 
