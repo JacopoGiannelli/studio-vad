@@ -56,6 +56,9 @@ h2 { font-size: 1.25rem; }
 p { margin: 0; }
 .eyebrow { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .lead { color: var(--muted); font-size: 1.05rem; max-width: 62ch; }
+/* istruzioni dell'introduzione: cosa descrivere dopo ogni frase */
+.istruzioni { display: grid; gap: 8px; max-width: 70ch; font-size: 1rem; line-height: 1.55; }
+.istruzioni ul { margin: 0; padding-left: 1.3rem; display: grid; gap: 4px; }
 
 section.block { display: grid; gap: 14px; }
 
@@ -3999,7 +4002,17 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     <header class="block" style="display:grid;gap:10px">
       <p class="eyebrow">Studio sulle emozioni · Università di Pisa</p>
       <h1>Come ti fa sentire questa storia?</h1>
-      <p class="lead">Leggerai 10 storie scelte a caso. Le storie sono brevi, di poche frasi ciascuna, e compaiono una frase alla volta. Dopo <b>ogni frase</b> ti chiederemo di descrivere, con tre voti da 1 a 5, l'emozione che quella frase ha suscitato in te.</p>
+      <p class="lead">Leggerai 10 storie scelte a caso. Le storie sono brevi, di poche frasi ciascuna, e compaiono una frase alla volta.</p>
+      <div class="istruzioni">
+        <p>Dopo <b>ogni frase</b>, ti chiederemo di descrivere come questa ha eventualmente influenzato il tuo <b>stato emotivo profondo</b>.</p>
+        <p>Per farlo, quantificherai con tre voti da 1 a 5 la <b>valenza</b>, l’<b>arousal</b> e la <b>dominanza</b>, ovvero quanto l’ultima frase:</p>
+        <ul>
+          <li>ti ha indotto una sensazione di piacevolezza o spiacevolezza (<b>valenza</b>);</li>
+          <li>ti ha attivato o lasciato indifferente (<b>arousal</b>), indipendentemente dalla sua piacevolezza o spiacevolezza;</li>
+          <li>ti ha indotto un’emozione che hai percepito come soverchiante o, al contrario, che hai sentito di poter gestire senza problemi (<b>dominanza</b>).</li>
+        </ul>
+        <p>Siamo interessati alla <b>tua personale esperienza</b>, non a ciò che pensi proverebbero altre persone leggendo quella frase: non limitarti a descrivere cosa pensi che volesse veicolare chi ha scritto la frase, ma cosa ha suscitato <b>in te</b> in quel momento.</p>
+      </div>
     </header>
 
     <section class="block" aria-labelledby="h-def">
