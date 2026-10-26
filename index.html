@@ -59,6 +59,8 @@ p { margin: 0; }
 /* istruzioni dell'introduzione: cosa descrivere dopo ogni frase */
 .istruzioni { display: grid; gap: 8px; max-width: 70ch; font-size: 1rem; line-height: 1.55; }
 .istruzioni ul { margin: 0; padding-left: 1.3rem; display: grid; gap: 4px; }
+/* riquadro per riprendere una sessione interrotta */
+.riprendi { background: var(--surface); border: 1px solid var(--accent); border-radius: 10px; padding: 14px 16px; gap: 10px; }
 
 section.block { display: grid; gap: 14px; }
 
@@ -4005,18 +4007,17 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       <p class="lead">Leggerai 10 storie scelte a caso. Le storie sono brevi, di poche frasi ciascuna, e compaiono una frase alla volta.</p>
       <div class="istruzioni">
         <p>Dopo <b>ogni frase</b>, ti chiederemo di descrivere come questa ha eventualmente influenzato il tuo <b>stato emotivo profondo</b>.</p>
-        <p>Per farlo, quantificherai con tre voti da 1 a 5 la <b>valenza</b>, l’<b>arousal</b> e la <b>dominanza</b>, ovvero quanto l’ultima frase:</p>
+        <p>Per farlo, quantificherai con due voti da 1 a 5 la <b>valenza</b> e l’<b>arousal</b>, ovvero quanto l’ultima frase:</p>
         <ul>
           <li>ti ha indotto una sensazione di piacevolezza o spiacevolezza (<b>valenza</b>);</li>
-          <li>ti ha attivato o lasciato indifferente (<b>arousal</b>), indipendentemente dalla sua piacevolezza o spiacevolezza;</li>
-          <li>ti ha indotto un’emozione che hai percepito come soverchiante o, al contrario, che hai sentito di poter gestire senza problemi (<b>dominanza</b>).</li>
+          <li>ti ha attivato o lasciato indifferente (<b>arousal</b>), indipendentemente dalla sua piacevolezza o spiacevolezza.</li>
         </ul>
         <p>Siamo interessati alla <b>tua personale esperienza</b>, non a ciò che pensi proverebbero altre persone leggendo quella frase: non limitarti a descrivere cosa pensi che volesse veicolare chi ha scritto la frase, ma cosa ha suscitato <b>in te</b> in quel momento.</p>
       </div>
     </header>
 
     <section class="block" aria-labelledby="h-def">
-      <h2 id="h-def">Le tre dimensioni</h2>
+      <h2 id="h-def">Le due dimensioni</h2>
       <div class="dims">
         <div class="dim" data-d="v"><div>
           <h3>Valenza <span>· piacevole o spiacevole</span></h3>
@@ -4030,12 +4031,6 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
           <div class="sam-preview" data-sam="arousal" aria-hidden="true"></div>
           <div class="poles"><span>1 = molto calmo</span><span>5 = molto agitato</span></div>
         </div></div>
-        <div class="dim" data-d="d"><div>
-          <h3>Dominanza <span>· controllo</span></h3>
-          <p>Quanto ti senti in controllo della situazione descritta: sopraffatto, impotente o dominato da una parte; padrone della situazione, sicuro e influente dall'altra.</p>
-          <div class="sam-preview" data-sam="dominanza" aria-hidden="true"></div>
-          <div class="poles"><span>1 = nessun controllo</span><span>5 = pieno controllo</span></div>
-        </div></div>
       </div>
     </section>
 
@@ -4044,14 +4039,22 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       <ol class="steps">
         <li>Prima di iniziare ti chiederemo <b>come ti senti in questo momento</b>, con due scale: valenza e arousal.</li>
         <li>Ogni storia è breve e viene mostrata <b>una frase alla volta</b>. Sullo schermo compare solo la frase da leggere: leggila con attenzione.</li>
-        <li>Subito dopo compaiono le tre scale, <b>una alla volta</b>: prima <b>valenza</b>, poi <b>arousal</b>, poi <b>dominanza</b>. Per ognuna tocca la figura che rappresenta meglio come ti ha fatto sentire <b>tu</b> quella frase, non come si sentono i personaggi.</li>
-        <li>Dopo aver scelto la figura della dominanza si passa <b>automaticamente</b> alla frase successiva. Il voto va dato <b>per ogni frase</b>, non solo alla fine della storia. Se tocchi una figura per sbaglio, usa <b>Indietro</b> per correggere.</li>
+        <li>Subito dopo compaiono le due scale, <b>una alla volta</b>: prima <b>valenza</b>, poi <b>arousal</b>. Per ognuna tocca la figura che rappresenta meglio come ti ha fatto sentire <b>tu</b> quella frase, non come si sentono i personaggi.</li>
+        <li>Dopo aver scelto la figura dell'arousal si passa <b>automaticamente</b> alla frase successiva. Il voto va dato <b>per ogni frase</b>, non solo alla fine della storia. Se tocchi una figura per sbaglio, usa <b>Indietro</b> per correggere.</li>
         <li>Finita una storia c'è una <b>pausa di 20 secondi</b>, con un timer sullo schermo: rilassati e lascia andare la storia appena letta. Alla fine della pausa ti chiederemo di nuovo come ti senti, e poi inizia la storia successiva, fino a completare tutte e 10.</li>
+        <li>Ogni risposta viene salvata <b>subito dopo averla data</b>. Se chiudi la pagina per sbaglio, riaprila dallo <b>stesso dispositivo e browser</b>: ripartirai dal punto in cui eri rimasto.</li>
       </ol>
       <p class="note">Non ci sono risposte giuste o sbagliate: conta quello che provi. Ci vogliono circa 15–20 minuti. Una volta confermato un voto non si può tornare indietro.</p>
     </section>
 
-    <div class="row">
+    <section class="block riprendi" id="riprendi" hidden>
+      <p><b>Hai una sessione in corso.</b> <span id="riprendi-dove"></span></p>
+      <div class="row">
+        <button class="btn" id="b-riprendi" type="button">Riprendi da dove eri rimasto</button>
+      </div>
+    </section>
+
+    <div class="row" id="riga-inizia">
       <button class="btn" id="b-start" type="button">Inizia</button>
       <span class="note" id="pool-info"></span>
     </div>
@@ -4077,14 +4080,9 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
         <div class="opts" data-name="arousal"></div>
         <div class="poles"><span>molto calmo</span><span>molto agitato</span></div>
       </fieldset>
-      <fieldset class="scale" data-d="d">
-        <legend>Dominanza <small>Infine, pensa a quanto ti senti padrone di ciò che provi. Ti senti sopraffatto e in balia della situazione, oppure in controllo?</small></legend>
-        <div class="opts" data-name="dominanza"></div>
-        <div class="poles"><span>nessun controllo</span><span>pieno controllo</span></div>
-      </fieldset>
       <div class="row">
         <button class="btn ghost" id="b-back" type="button" hidden>← Indietro</button>
-        <span class="hint" id="hint">Domanda 1 di 3</span>
+        <span class="hint" id="hint">Domanda 1 di 2</span>
       </div>
     </form>
   </div>
@@ -4138,7 +4136,8 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   const VERSIONE = "testi";   // "testi" = solo testo, "immagini" = testo + immagine per frase
   const N_STORIE = 10;           // storie da mostrare a ogni partecipante
   const PAUSA_S = 20;            // protocollo A: secondi di pausa dopo ogni storia
-  const DIMENSIONI = ["valenza", "arousal", "dominanza"];
+  const DIMENSIONI = ["valenza", "arousal"];   // la dominanza non si chiede più
+  const CHIAVE_STATO = "vad_stato_" + VERSIONE;  // sessione in corso salvata nel browser
 
   // ---------- dati ----------
   let POOL = [];
@@ -4187,10 +4186,12 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     inizio: null,
     fine: null,
     storie: [],
-    risposte: [],  // {ordine, id_storia, n_frase, frase, valenza, arousal, dominanza, tempo_ms}
+    risposte: [],  // {ordine, id_storia, n_frase, frase, valenza, arousal, immagine, tempo_ms}
     umore: []      // stato d'animo (protocollo A): {momento, ordine_storia, id_storia_precedente, id_storia_successiva, pausa_s, valenza, arousal, tempo_ms}
   };
   let idx = 0, fidx = 0, tStart = 0;   // idx = storia corrente, fidx = frase corrente
+  // coda dei lotti da inviare al foglio: un lotto per storia completata (più uno finale per l'umore)
+  let coda = [], nLotto = 0, umoreInviato = 0, fase_ = "intro";
 
   // ---------- figure SAM (Self-Assessment Manikin) ----------
   // Ritagli della tavola SAM originale (Bradley & Lang, 1994): riga 1 valenza,
@@ -4232,11 +4233,11 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     return out;
   }
   // ---------- una scala alla volta ----------
-  // step = indice della scala visibile: 0 valenza, 1 arousal, 2 dominanza
+  // step = indice della scala visibile: 0 valenza, 1 arousal
   const SCALE = Array.from(form.querySelectorAll("fieldset.scale"));
   const RITARDO_MS = 350;      // pausa per far vedere la figura scelta prima di cambiare scala
   let step = 0, inAvanzamento = false;
-  // fase: "umore" (stato d'animo, solo valenza e arousal) oppure "frase" (le tre scale)
+  // fase: "umore" (stato d'animo) oppure "frase" (valutazione della frase); in entrambi i casi valenza e arousal
   let fase = "frase", attive = SCALE;
 
   // testi delle domande: quelli per le frasi sono nell'HTML, quelli per l'umore qui
@@ -4264,7 +4265,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       inAvanzamento = false;
       if (step < attive.length - 1) { step++; mostraScala(); }
       else if (fase === "umore") registraUmore();   // dopo l'arousal: inizia la storia (o fine)
-      else registra();                               // dopo la dominanza: frase o pausa
+      else registra();                               // dopo l'arousal: frase successiva o pausa
     }, RITARDO_MS);
   });
 
@@ -4321,13 +4322,14 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       document.querySelector(".progress").scrollIntoView({ block: "start", behavior: piano ? "auto" : "smooth" });
     }
     tStart = performance.now();
+    fase_ = "frase"; salvaStato();
   }
 
   $("b-start").addEventListener("click", () => {
     if (POOL.length === 0) { $("pool-info").textContent = "Nessuna storia caricata nel dataset."; return; }
     sessione.storie = estrai(POOL, N_STORIE);
     sessione.inizio = new Date().toISOString();
-    idx = 0; fidx = 0; fatte = 0;
+    idx = 0; fidx = 0; fatte = 0; coda = []; nLotto = 0; umoreInviato = 0;
     totFrasi = sessione.storie.reduce((n, s) => n + s.frasi.length, 0);
     iniziaUmore();               // protocollo A: stato d'animo di partenza
   });
@@ -4350,6 +4352,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     form.reset();
     step = 0; mostraScala();
     tStart = performance.now();
+    fase_ = "umore"; salvaStato();
   }
 
   function registraUmore() {
@@ -4365,6 +4368,8 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       valenza: v.valenza, arousal: v.arousal,
       tempo_ms: Math.round(performance.now() - tStart)
     });
+    accodaLotto([]);                                 // anche lo stato d'animo parte subito
+    inviaCoda();
     if (idx < n) { fidx = 0; renderFrase(); }
     else concludi();
   }
@@ -4376,6 +4381,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     const ring = $("pausa-ring"), C = 2 * Math.PI * 54, durata = PAUSA_S * 1000;
     ring.style.strokeDasharray = C; ring.style.strokeDashoffset = 0;
     tPausa = performance.now();
+    fase_ = "pausa"; salvaStato();
     // il tempo si calcola dall'orologio, non contando i fotogrammi: resta preciso anche se il telefono rallenta
     function tick() {
       const passato = performance.now() - tPausa, resto = Math.max(0, durata - passato);
@@ -4397,64 +4403,98 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     const s = sessione.storie[idx];
     sessione.risposte.push({
       ordine: idx + 1, id_storia: s.id, n_frase: fidx + 1, frase: s.frasi[fidx],
-      valenza: v.valenza, arousal: v.arousal, dominanza: v.dominanza,
+      valenza: v.valenza, arousal: v.arousal,
       immagine: (s.codici && s.codici[fidx]) || (s.immagini && s.immagini[fidx]) || "",
       tempo_ms: Math.round(performance.now() - tStart)
     });
     fatte++;
     fidx++;
+    // il voto di questa frase parte subito verso il foglio
+    accodaLotto([sessione.risposte[sessione.risposte.length - 1]]);
     if (fidx >= s.frasi.length) { idx++; fidx = 0; avviaPausa(); }   // fine storia: pausa, poi stato d'animo
     else renderFrase();
+    inviaCoda();
   }
 
   // ---------- CSV ----------
-  const HEADER = ["tipo", "sessione", "inizio", "fine", "ordine_storia", "id_storia", "n_frase", "frase", "valenza", "arousal", "dominanza", "tempo_ms", "momento", "id_storia_precedente", "pausa_s", "versione", "immagine"];
+  const HEADER = ["tipo", "sessione", "inizio", "fine", "ordine_storia", "id_storia", "n_frase", "frase", "valenza", "arousal", "tempo_ms", "momento", "id_storia_precedente", "pausa_s", "versione", "immagine"];
   const q = x => { const s = String(x ?? ""); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
   function righeSessione(ses) {
-    const frasi = ses.risposte.map(r => ["frase", ses.id, ses.inizio, ses.fine, r.ordine, r.id_storia, r.n_frase, r.frase, r.valenza, r.arousal, r.dominanza, r.tempo_ms, "", "", "", VERSIONE, r.immagine || ""]);
-    const umore = (ses.umore || []).map(u => ["umore", ses.id, ses.inizio, ses.fine, u.ordine_storia, u.id_storia_successiva, "", "", u.valenza, u.arousal, "", u.tempo_ms, u.momento, u.id_storia_precedente, u.pausa_s, VERSIONE, ""]);
+    const frasi = ses.risposte.map(r => ["frase", ses.id, ses.inizio, ses.fine, r.ordine, r.id_storia, r.n_frase, r.frase, r.valenza, r.arousal, r.tempo_ms, "", "", "", VERSIONE, r.immagine || ""]);
+    const umore = (ses.umore || []).map(u => ["umore", ses.id, ses.inizio, ses.fine, u.ordine_storia, u.id_storia_successiva, "", "", u.valenza, u.arousal, u.tempo_ms, u.momento, u.id_storia_precedente, u.pausa_s, VERSIONE, ""]);
     return frasi.concat(umore);
   }
   function toCSV(rows) { return [HEADER, ...rows].map(r => r.map(q).join(",")).join("\n"); }
 
   // ---------- invio al Google Sheet (Apps Script) ----------
+  // Ogni risposta diventa un "lotto": il voto di una frase, oppure uno stato d'animo.
+  // Il lotto viene messo in coda e inviato subito. Se l'invio non riesce (rete assente, pagina
+  // chiusa) il lotto resta in coda, salvata nel browser, e riparte al tentativo successivo.
+  // Il numero di lotto permette ad Apps Script di scartare un invio arrivato due volte.
   // Il body viene mandato come text/plain: è una "richiesta semplice" per il browser,
   // quindi non parte la richiesta preliminare CORS (preflight) che Apps Script non gestisce.
-  async function salvaOnline() {
-    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("script.google.com") === -1) return false;
-    const payload = {
-      sessione: sessione.id, inizio: sessione.inizio, fine: sessione.fine,
-      user_agent: navigator.userAgent,
-      versione: VERSIONE,
-      risposte: sessione.risposte,
-      umore: sessione.umore
-    };
+  // risposte = voti di frase da inviare in questo lotto ([] se il lotto è solo uno stato d'animo);
+  // ogni lotto porta anche gli stati d'animo registrati e non ancora inviati
+  function accodaLotto(risposte) {
+    nLotto++;
+    coda.push({
+      lotto: sessione.id + "-" + nLotto,
+      risposte: risposte,
+      umore: sessione.umore.slice(umoreInviato)
+    });
+    umoreInviato = sessione.umore.length;
+    salvaStato();
+  }
+
+  async function inviaLotto(l) {
     const res = await fetch(APPS_SCRIPT_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        lotto: l.lotto,
+        sessione: sessione.id, inizio: sessione.inizio, fine: sessione.fine || "",
+        user_agent: navigator.userAgent, versione: VERSIONE,
+        risposte: l.risposte, umore: l.umore
+      })
     });
     const out = await res.json();
     if (!out.ok) throw new Error(out.error || "errore sconosciuto");
-    return true;
+  }
+
+  // invia i lotti in coda uno alla volta, nell'ordine; restituisce true se la coda è vuota
+  let inInvio = null;
+  function inviaCoda() {
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("script.google.com") === -1) return Promise.resolve(false);
+    if (inInvio) return inInvio;                     // un solo invio alla volta
+    inInvio = (async () => {
+      try {
+        while (coda.length) {
+          await inviaLotto(coda[0]);
+          coda.shift(); salvaStato();                // tolto dalla coda solo dopo la conferma
+        }
+        return true;
+      } catch (e) { return false; }
+      finally { inInvio = null; }
+    })();
+    return inInvio;
   }
 
   async function tentaSalvataggio() {
     const st = $("save-status");
     st.dataset.s = ""; st.textContent = "Salvataggio in corso…";
     $("b-retry").hidden = true;
-    try {
-      const ok = await salvaOnline();
-      if (ok) {
-        st.dataset.s = "ok"; st.textContent = "Risposte salvate. Puoi chiudere la pagina.";
-        $("fallback").hidden = true;
-        try { localStorage.removeItem("vad_sessione_in_sospeso_" + VERSIONE); } catch (e) {}
-      } else {
-        st.dataset.s = "warn"; st.textContent = "Salvataggio automatico non configurato. Usa una delle opzioni qui sotto.";
-      }
-    } catch (e) {
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("script.google.com") === -1) {
+      st.dataset.s = "warn"; st.textContent = "Salvataggio automatico non configurato. Usa una delle opzioni qui sotto.";
+      return;
+    }
+    const ok = await inviaCoda();
+    if (ok) {
+      st.dataset.s = "ok"; st.textContent = "Risposte salvate. Puoi chiudere la pagina.";
+      $("fallback").hidden = true;
+      cancellaStato();                               // sessione chiusa: niente da riprendere
+    } else {
       st.dataset.s = "warn";
-      st.textContent = "Non è stato possibile inviare le risposte (controlla la connessione). Riprova, oppure usa una delle opzioni qui sotto.";
+      st.textContent = "Non è stato possibile inviare tutte le risposte (controlla la connessione). Riprova, oppure usa una delle opzioni qui sotto.";
       $("b-retry").hidden = false;
     }
   }
@@ -4462,12 +4502,56 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   async function concludi() {
     sessione.fine = new Date().toISOString();
     $("p-bar").style.width = "100%";
-    const csv = toCSV(righeSessione(sessione));
-    $("dump").value = csv;
-    // copia di sicurezza nel browser finché l'invio non va a buon fine
-    try { localStorage.setItem("vad_sessione_in_sospeso_" + VERSIONE, JSON.stringify(sessione)); } catch (e) {}
+    fase_ = "fine"; salvaStato();
+    $("dump").value = toCSV(righeSessione(sessione));
     show("s-end");
     tentaSalvataggio();
+  }
+
+  // ---------- sessione salvata nel browser: ripresa dopo una chiusura ----------
+  // Dopo ogni voto si salva tutto ciò che serve per ripartire: storie estratte, risposte,
+  // punto raggiunto e coda di invio. Riaprendo la pagina dallo stesso browser si riparte da lì.
+  function salvaStato() {
+    try {
+      localStorage.setItem(CHIAVE_STATO, JSON.stringify({
+        salvato: new Date().toISOString(), sessione, idx, fidx, fatte, totFrasi,
+        fase: fase_, coda, nLotto, umoreInviato
+      }));
+    } catch (e) {}
+  }
+  function cancellaStato() { try { localStorage.removeItem(CHIAVE_STATO); } catch (e) {} }
+  function leggiStato() {
+    try {
+      const st = JSON.parse(localStorage.getItem(CHIAVE_STATO));
+      if (st && st.sessione && Array.isArray(st.sessione.storie) && st.sessione.storie.length) return st;
+    } catch (e) {}
+    return null;
+  }
+
+  function riprendi(st) {
+    Object.assign(sessione, st.sessione);
+    idx = st.idx; fidx = st.fidx; fatte = st.fatte; totFrasi = st.totFrasi;
+    coda = st.coda || []; nLotto = st.nLotto || 0; umoreInviato = st.umoreInviato || 0;
+    inviaCoda();                                     // eventuali storie rimaste da inviare
+    const n = sessione.storie.length;
+    if (st.fase === "fine") { $("dump").value = toCSV(righeSessione(sessione)); show("s-end"); tentaSalvataggio(); }
+    else if (st.fase === "pausa") avviaPausa();      // la pausa riparte da capo (20 s)
+    else if (st.fase === "frase" && idx < n) { show("s-story"); renderFrase(); }
+    else iniziaUmore();                              // stato d'animo da dare (inizio, dopo pausa o fine)
+  }
+
+  // all'apertura: se c'è una sessione non finita si propone di riprenderla
+  const stato0 = leggiStato();
+  if (stato0) {
+    if (stato0.fase === "fine") riprendi(stato0);    // finita ma non ancora tutta inviata
+    else {
+      const n = stato0.sessione.storie.length, i = Math.min(stato0.idx, n - 1);
+      $("riprendi-dove").textContent = stato0.fase === "frase"
+        ? "Eri alla storia " + (stato0.idx + 1) + " di " + n + ", frase " + (stato0.fidx + 1) + "."
+        : "Hai completato " + stato0.idx + " storie su " + n + ".";
+      $("riprendi").hidden = false; $("riga-inizia").hidden = true;
+      $("b-riprendi").addEventListener("click", () => { $("riprendi").hidden = true; riprendi(stato0); });
+    }
   }
   $("b-retry").addEventListener("click", tentaSalvataggio);
 

@@ -1,15 +1,21 @@
 /**
  * Apps Script che riceve le risposte della web app VAD e le scrive nel Google Sheet.
  *
- * Ogni sessione di un partecipante arriva come un'unica richiesta POST (JSON) e
- * diventa:
- *  - N righe nel foglio "risposte": una riga per ogni frase valutata (valenza, arousal, dominanza);
+ * Le risposte arrivano a "lotti": la web app invia una richiesta POST (JSON) alla fine
+ * di ogni storia, con le frasi di quella storia e lo stato d'animo registrato prima,
+ * più un ultimo lotto con lo stato d'animo finale. Ogni lotto diventa:
+ *  - N righe nel foglio "risposte": una riga per ogni frase valutata (valenza, arousal);
+ *    la colonna "dominanza" resta per compatibilità con i dati già raccolti, ma ora è vuota;
  *  - M righe nel foglio "umore": una riga per ogni rilevazione dello stato d'animo
  *    (protocollo A: all'inizio, dopo la pausa che segue ogni storia, alla fine).
  *
  * Le due web app (solo testi / testi + immagini) scrivono negli stessi fogli:
  * la colonna "versione" dice da quale arriva la riga, la colonna "immagine"
  * il codice dell'immagine mostrata con la frase (es. "IAPS 1050", "OASIS Snake 3").
+ *
+ * Il foglio "lotti" tiene l'elenco dei lotti già scritti: se lo stesso lotto arriva due
+ * volte (per esempio perché la risposta di conferma si è persa e la pagina lo rimanda),
+ * viene ignorato e le righe non si duplicano.
  *
  * Installazione: Estensioni → Apps Script nel Google Sheet, incolla questo file,
  * poi Distribuisci → Nuova distribuzione → App web (vedi guida).
@@ -23,6 +29,10 @@ const INTESTAZIONE = [
   "n_frase", "frase", "valenza", "arousal", "dominanza", "tempo_ms", "user_agent",
   "versione", "immagine"
 ];
+
+// Registro dei lotti già scritti (serve a scartare gli invii doppi)
+const NOME_FOGLIO_LOTTI = "lotti";
+const INTESTAZIONE_LOTTI = ["ricevuto", "lotto", "sessione", "righe", "righe_umore"];
 
 // Protocollo A: stato d'animo prima di ogni storia e alla fine
 const NOME_FOGLIO_UMORE = "umore";
@@ -60,6 +70,11 @@ function voto_(v) {
   return n;
 }
 
+// Dominanza: non più richiesta dalla web app; se manca la cella resta vuota.
+function votoFacoltativo_(v) {
+  return (v === undefined || v === null || v === "") ? "" : voto_(v);
+}
+
 // Testo "pulito": tronca i campi lunghi ed evita che una cella venga
 // interpretata come formula (=, +, -, @ all'inizio).
 function testo_(s, max) {
@@ -80,11 +95,19 @@ function doPost(e) {
   try {
     lock.waitLock(20000);
     const d = JSON.parse(e.postData.contents);
-    if (!d || !Array.isArray(d.risposte) || d.risposte.length === 0 || d.risposte.length > 500) {
+    if (!d || !Array.isArray(d.risposte) || d.risposte.length > 500) {
       throw new Error("formato non valido");
     }
     const umore = Array.isArray(d.umore) ? d.umore : [];
     if (umore.length > 50) throw new Error("formato non valido (umore)");
+    if (d.risposte.length === 0 && umore.length === 0) throw new Error("lotto vuoto");
+
+    // lotto già ricevuto? allora è un doppio invio: si conferma senza riscrivere
+    const lotto = testo_(d.lotto, 100);
+    const shLotti = foglio_(NOME_FOGLIO_LOTTI, INTESTAZIONE_LOTTI);
+    if (lotto && shLotti.getRange("B:B").createTextFinder(lotto).matchEntireCell(true).findNext()) {
+      return json_({ ok: true, duplicato: true });
+    }
 
     const ora = new Date();
     // le righe vengono preparate e controllate tutte PRIMA di scrivere:
@@ -101,7 +124,7 @@ function doPost(e) {
         testo_(r.frase, 2000),
         voto_(r.valenza),
         voto_(r.arousal),
-        voto_(r.dominanza),
+        votoFacoltativo_(r.dominanza),
         Number(r.tempo_ms) || "",
         testo_(d.user_agent, 300),
         testo_(d.versione || "testi", 20),
@@ -127,6 +150,7 @@ function doPost(e) {
 
     scrivi_(foglio_(NOME_FOGLIO, INTESTAZIONE), righe, INTESTAZIONE.length);
     scrivi_(foglio_(NOME_FOGLIO_UMORE, INTESTAZIONE_UMORE), righeUmore, INTESTAZIONE_UMORE.length);
+    if (lotto) shLotti.appendRow([ora, lotto, testo_(d.sessione, 64), righe.length, righeUmore.length]);
     return json_({ ok: true, righe: righe.length, righe_umore: righeUmore.length });
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message || err) });
@@ -138,5 +162,5 @@ function doPost(e) {
 // Aprendo l'URL /exec nel browser si vede questo messaggio: utile per controllare
 // che la distribuzione funzioni.
 function doGet() {
-  return json_({ ok: true, messaggio: "Web app VAD attiva (protocollo A). Le risposte arrivano via POST." });
+  return json_({ ok: true, messaggio: "Web app VAD attiva (protocollo A, invio a lotti). Le risposte arrivano via POST." });
 }
