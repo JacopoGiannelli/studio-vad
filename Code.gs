@@ -13,9 +13,10 @@
  * il codice dell'immagine mostrata con la frase (es. "IAPS 1050", "OASIS Snake 3").
  *
  * Oltre ai voti, per ogni frase e ogni stato d'animo arrivano le misure di risposta
- * (colonne in fondo, vedi COLONNE_MISURE): tempo della prima scelta per valenza e arousal,
- * prima figura scelta, numero di cambi, pressioni di "Indietro", aperture del pulsante (i),
- * e pagina_nascosta = 1 se durante la risposta la persona è passata ad altra scheda o app.
+ * (colonne in fondo, vedi COLONNE_MISURE): tempo della prima scelta e del voto finale per
+ * valenza e arousal (misurati solo mentre quella scala è sullo schermo), prima figura scelta,
+ * numero di cambi, pressioni di "Indietro", aperture del pulsante (i), e pagina_nascosta = 1
+ * se durante la risposta la persona è passata ad altra scheda o app.
  *
  * Il foglio "lotti" tiene l'elenco dei lotti già scritti: se lo stesso lotto arriva due
  * volte (per esempio perché la risposta di conferma si è persa e la pagina lo rimanda),
@@ -31,7 +32,8 @@
 // I fogli creati con la versione precedente ricevono le colonne nuove in automatico.
 const COLONNE_MISURE = [
   "rt_valenza_ms", "rt_arousal_ms", "prima_valenza", "prima_arousal",
-  "cambi_valenza", "cambi_arousal", "n_indietro", "n_info", "pagina_nascosta"
+  "cambi_valenza", "cambi_arousal", "n_indietro", "n_info", "pagina_nascosta",
+  "rt_finale_valenza_ms", "rt_finale_arousal_ms"
 ];
 
 const NOME_FOGLIO = "risposte";
@@ -184,5 +186,5 @@ function doPost(e) {
 // Aprendo l'URL /exec nel browser si vede questo messaggio: utile per controllare
 // che la distribuzione funzioni.
 function doGet() {
-  return json_({ ok: true, messaggio: "Web app VAD attiva (protocollo A, invio a lotti, misure di risposta). Le risposte arrivano via POST." });
+  return json_({ ok: true, messaggio: "Web app VAD attiva (protocollo A, invio a lotti, misure di risposta v2). Le risposte arrivano via POST." });
 }

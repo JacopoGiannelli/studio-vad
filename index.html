@@ -4169,7 +4169,8 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   const FRASE_PROVA = "Mentre torno a casa inizia a piovere forte e mi accorgo di aver dimenticato l'ombrello.";
   // misure registrate per ogni frase e ogni stato d'animo, oltre ai voti (stesse colonne nel foglio)
   const COLONNE_MISURE = ["rt_valenza_ms", "rt_arousal_ms", "prima_valenza", "prima_arousal",
-                          "cambi_valenza", "cambi_arousal", "n_indietro", "n_info", "pagina_nascosta"];
+                          "cambi_valenza", "cambi_arousal", "n_indietro", "n_info", "pagina_nascosta",
+                          "rt_finale_valenza_ms", "rt_finale_arousal_ms"];
 
   // ---------- dati ----------
   let POOL = [];
@@ -4284,16 +4285,35 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
 
   // ---------- misure di risposta ----------
   // Per ogni frase (e ogni stato d'animo) si registrano, oltre al voto finale:
-  //  - rt_<dim>_ms: tempo dalla comparsa della scala alla PRIMA scelta (tempo di risposta)
+  //  - rt_<dim>_ms: tempo alla PRIMA scelta su quella scala (tempo di risposta)
+  //  - rt_finale_<dim>_ms: tempo all'ULTIMA scelta su quella scala, cioè al voto finale
+  //    (uguale a rt_<dim>_ms se la persona non ha cambiato idea)
+  //    Entrambi i tempi sono misurati con un cronometro PER SCALA, che corre solo mentre quella
+  //    scala è sullo schermo: il tempo passato sull'altra scala (per esempio tornando con
+  //    "Indietro") non viene contato, e il cronometro si ferma anche se la pagina viene nascosta.
   //  - prima_<dim>: la prima figura scelta, e cambi_<dim>: quante volte la scelta è cambiata dopo
   //    (correzioni subito dopo il tocco, oppure tornando con "Indietro") → marker di incertezza
   //  - n_indietro: quante volte è stato premuto "Indietro"; n_info: quante volte è stato aperto (i)
   //  - pagina_nascosta: 1 se durante la risposta la persona è passata a un'altra scheda o app
   //    (in quel caso i tempi non sono affidabili e conviene escluderli dalle analisi)
   let misura = null;
+  let dimCrono = null;   // scala il cui cronometro sta correndo
   function nuovaMisura() {
     misura = { n_indietro: 0, n_info: 0, nascosta: document.hidden ? 1 : 0, dim: {} };
-    for (const d of DIMENSIONI) misura.dim[d] = { mostrata: null, rt: null, prima: null, ultima: null, cambi: 0 };
+    // attivo = ms accumulati mentre la scala era visibile; dal = istante in cui il cronometro è ripartito
+    for (const d of DIMENSIONI) misura.dim[d] = { attivo: 0, dal: null, rt: null, rtFinale: null, prima: null, ultima: null, cambi: 0 };
+    dimCrono = null;
+  }
+  // cronometro per scala: si accumula il tempo solo mentre la scala è sullo schermo
+  function tempoScala(m) { return m.attivo + (m.dal != null ? performance.now() - m.dal : 0); }
+  function pausaCrono() {
+    const m = misura && dimCrono && misura.dim[dimCrono];
+    if (m && m.dal != null) { m.attivo += performance.now() - m.dal; m.dal = null; }
+  }
+  function avviaCrono(d) {
+    pausaCrono();                                    // ferma quello della scala precedente
+    dimCrono = misura && misura.dim[d] ? d : null;
+    if (dimCrono && !document.hidden) misura.dim[d].dal = performance.now();
   }
   function campiMisura() {
     const o = {};
@@ -4302,6 +4322,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       o["rt_" + d + "_ms"] = m.rt == null ? "" : m.rt;
       o["prima_" + d] = m.prima == null ? "" : m.prima;
       o["cambi_" + d] = m.cambi;
+      o["rt_finale_" + d + "_ms"] = m.rtFinale == null ? "" : m.rtFinale;
     }
     o.n_indietro = misura.n_indietro; o.n_info = misura.n_info; o.pagina_nascosta = misura.nascosta;
     return o;
@@ -4311,11 +4332,18 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     const m = misura && misura.dim[e.target.name];
     if (!m) return;
     const v = Number(e.target.value);
-    if (m.prima == null) { m.prima = v; m.rt = Math.round(performance.now() - (m.mostrata == null ? tStart : m.mostrata)); }
+    const t = Math.round(tempoScala(m));
+    if (m.prima == null) { m.prima = v; m.rt = t; }
     else if (v !== m.ultima) m.cambi++;
     m.ultima = v;
+    m.rtFinale = t;                 // aggiornato a ogni scelta: alla fine resta quello del voto definitivo
   });
-  document.addEventListener("visibilitychange", () => { if (document.hidden && misura) misura.nascosta = 1; });
+  // pagina nascosta (altra scheda o app): si segna e il cronometro si mette in pausa finché non torna visibile
+  document.addEventListener("visibilitychange", () => {
+    if (!misura) return;
+    if (document.hidden) { misura.nascosta = 1; pausaCrono(); }
+    else if (dimCrono && misura.dim[dimCrono].dal == null) misura.dim[dimCrono].dal = performance.now();
+  });
 
   // ---------- pulsante (i): criterio di valutazione di ogni domanda ----------
   // Su computer si apre passandoci sopra col mouse (e si chiude uscendo); un clic lo tiene aperto.
@@ -4369,9 +4397,8 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     $("hint").textContent = "Domanda " + (step + 1) + " di " + attive.length;
     $("b-back").hidden = step === 0;
     chiudiInfo();
-    // momento in cui la scala compare per la prima volta: da qui parte il tempo di risposta
-    const d = attive[step].querySelector(".opts").dataset.name;
-    if (misura && misura.dim[d] && misura.dim[d].mostrata == null) misura.dim[d].mostrata = performance.now();
+    // la scala visibile fa correre il proprio cronometro (quello dell'altra scala si ferma)
+    avviaCrono(attive[step].querySelector(".opts").dataset.name);
   }
 
   // passa alla scala successiva (o registra la risposta) dopo una scelta sulla scala visibile

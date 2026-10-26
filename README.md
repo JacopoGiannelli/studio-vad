@@ -27,12 +27,16 @@ Per ogni frase e ogni stato d'animo, oltre ai voti, vengono salvate (colonne in 
 
 | colonna | significato |
 |---|---|
-| `rt_valenza_ms`, `rt_arousal_ms` | tempo dalla comparsa della scala alla **prima** scelta |
+| `rt_valenza_ms`, `rt_arousal_ms` | tempo alla **prima** scelta su quella scala |
+| `rt_finale_valenza_ms`, `rt_finale_arousal_ms` | tempo al **voto finale** (ultima scelta) su quella scala |
 | `prima_valenza`, `prima_arousal` | prima figura scelta (il voto finale è in `valenza`/`arousal`) |
 | `cambi_valenza`, `cambi_arousal` | quante volte la scelta è cambiata dopo la prima (marker di incertezza) |
 | `n_indietro` | pressioni del pulsante "Indietro" |
 | `n_info` | aperture del pulsante (i) |
 | `pagina_nascosta` | 1 se durante la risposta si è passati ad altra scheda/app (tempi non affidabili) |
+
+I tempi `rt_*` sono misurati con un cronometro per scala, che corre solo mentre quella
+scala è sullo schermo (si ferma passando all'altra scala e se la pagina viene nascosta).
 
 `tempo_ms` resta il tempo totale dalla comparsa della frase al voto finale di arousal.
 
