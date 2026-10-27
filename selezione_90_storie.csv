@@ -1,0 +1,91 @@
+﻿id;gruppo;nome_gruppo;StoryType;nome_tipo;n_frasi;caratteri_IT;paese;valence_mean_English;arousal_mean_English;motivo_selezione
+FI27;1;Costante;1;Costante;11;1001;Finland;6;2.875;estratta a caso
+FI33;1;Costante;1;Costante;13;934;Finland;6.043478261;2.260869565;estratta a caso
+FR25;1;Costante;1;Costante;17;915;France;5.909090909;5.681818182;estratta a caso
+FR40;1;Costante;1;Costante;11;930;France;6.652173913;3.47826087;estratta a caso
+G335;1;Costante;1;Costante;17;995;Germany;3.652173913;3.695652174;estratta a caso
+G351;1;Costante;1;Costante;10;927;Germany;7.166666667;2.791666667;estratta a caso
+P10;1;Costante;1;Costante;16;1147;Portugal;2.285714286;3.380952381;estratta a caso
+P14;1;Costante;1;Costante;12;1182;Portugal;5;2.681818182;estratta a caso
+SP018;1;Costante;1;Costante;13;1161;Spain;6.913043478;3.260869565;estratta a caso
+SW001;1;Costante;1;Costante;17;947;Switzerland;2.583333333;4.375;estratta a caso
+SW010;1;Costante;1;Costante;17;913;Switzerland;3.454545455;4.454545455;estratta a caso
+T007;1;Costante;1;Costante;20;1069;Turkey;5.208333333;4.666666667;estratta a caso
+T014;1;Costante;1;Costante;16;1134;Turkey;4.434782609;3.434782609;estratta a caso
+T028;1;Costante;1;Costante;7;1116;Turkey;5.25;3.833333333;estratta a caso
+T038;1;Costante;1;Costante;31;1322;Turkey;2.954545455;5.090909091;estratta a caso
+FI13;2;Tragedia;2;Tragedia;18;1081;Finland;3.772727273;5.454545455;estratta a caso
+FI24;2;Tragedia;2;Tragedia;16;989;Finland;3.217391304;6.565217391;estratta a caso
+FI30;2;Tragedia;2;Tragedia;17;1126;Finland;3.260869565;6.826086957;estratta a caso
+FI37;2;Tragedia;2;Tragedia;15;1188;Finland;2.434782609;5.652173913;estratta a caso
+FR35;2;Tragedia;2;Tragedia;12;937;France;2.25;3.9;estratta a caso
+FR71;2;Tragedia;2;Tragedia;9;944;France;3.36;5;estratta a caso
+G349;2;Tragedia;2;Tragedia;11;1049;Germany;2.791666667;5.916666667;estratta a caso
+P09;2;Tragedia;2;Tragedia;19;1258;Portugal;2.7;3;estratta a caso
+SP007;2;Tragedia;2;Tragedia;12;1114;Spain;2.956521739;4.043478261;estratta a caso
+SP013;2;Tragedia;2;Tragedia;13;1094;Spain;3;3.409090909;estratta a caso
+SP026;2;Tragedia;2;Tragedia;22;1145;Spain;2.25;5;estratta a caso
+SW226;2;Tragedia;2;Tragedia;12;984;Switzerland;2.652173913;5.652173913;estratta a caso
+T001;2;Tragedia;2;Tragedia;15;1059;Turkey;3.56;3.28;estratta a caso
+T030;2;Tragedia;2;Tragedia;14;1264;Turkey;4.56;3;estratta a caso
+T039;2;Tragedia;2;Tragedia;17;1322;Turkey;3.35;4.8;estratta a caso
+FI20;3;Rags-to-riches;3;Rags-to-riches;14;975;Finland;6.52;5.32;estratta a caso
+FR104;3;Rags-to-riches;3;Rags-to-riches;7;932;France;6.833333333;4.166666667;estratta a caso
+FR58;3;Rags-to-riches;3;Rags-to-riches;17;976;France;5.15;4.2;estratta a caso
+FR69;3;Rags-to-riches;3;Rags-to-riches;10;927;France;6.75;2.85;estratta a caso
+FR73;3;Rags-to-riches;3;Rags-to-riches;9;939;France;6.636363636;2.863636364;estratta a caso
+G305;3;Rags-to-riches;3;Rags-to-riches;9;954;Germany;7.318181818;5.545454545;estratta a caso
+P04;3;Rags-to-riches;3;Rags-to-riches;22;1154;Portugal;6.304347826;3.913043478;estratta a caso
+P06;3;Rags-to-riches;3;Rags-to-riches;20;1379;Portugal;6.608695652;3.260869565;estratta a caso
+P08;3;Rags-to-riches;3;Rags-to-riches;13;1265;Portugal;6.391304348;3.260869565;estratta a caso
+P15;3;Rags-to-riches;3;Rags-to-riches;10;1204;Portugal;6.958333333;3.625;estratta a caso
+P17;3;Rags-to-riches;3;Rags-to-riches;15;1382;Portugal;7.318181818;4.681818182;estratta a caso
+P30;3;Rags-to-riches;3;Rags-to-riches;14;1339;Portugal;6.708333333;3.958333333;estratta a caso
+SP020;3;Rags-to-riches;3;Rags-to-riches;11;1030;Spain;6.333333333;4.75;estratta a caso
+SW008;3;Rags-to-riches;3;Rags-to-riches;12;976;Switzerland;6.80952381;3.714285714;estratta a caso
+T023;3;Rags-to-riches;3;Rags-to-riches;16;1019;Turkey;6.227272727;5.090909091;estratta a caso
+FR39;4;Man-in-a-hole;4;Man-in-a-hole;12;960;France;5.25;3.416666667;tutte le disponibili
+FR87;4;Man-in-a-hole;4;Man-in-a-hole;13;947;France;5;4.913043478;tutte le disponibili
+G301;4;Man-in-a-hole;4;Man-in-a-hole;8;999;Germany;6.791666667;4.166666667;tutte le disponibili
+G339;4;Man-in-a-hole;4;Man-in-a-hole;26;965;Germany;5.863636364;3.954545455;tutte le disponibili
+P16;4;Man-in-a-hole;4;Man-in-a-hole;16;1150;Portugal;5.863636364;4.409090909;tutte le disponibili
+P28;4;Man-in-a-hole;4;Man-in-a-hole;11;1186;Portugal;3.181818182;4.272727273;tutte le disponibili
+SP019;4;Man-in-a-hole;4;Man-in-a-hole;10;1400;Spain;4.434782609;4.173913043;tutte le disponibili
+SP025;4;Man-in-a-hole;4;Man-in-a-hole;6;1073;Spain;6.958333333;4.458333333;tutte le disponibili
+SW017;4;Man-in-a-hole;4;Man-in-a-hole;13;960;Switzerland;5.208333333;5.25;tutte le disponibili
+SW022;4;Man-in-a-hole;4;Man-in-a-hole;9;882;Switzerland;5.625;5.208333333;reintegrata (IT < 900 caratteri)
+SW023;4;Man-in-a-hole;4;Man-in-a-hole;9;888;Switzerland;5.391304348;5.782608696;reintegrata (IT < 900 caratteri)
+T022;4;Man-in-a-hole;4;Man-in-a-hole;26;1272;Turkey;6.043478261;3.782608696;tutte le disponibili
+T026;4;Man-in-a-hole;4;Man-in-a-hole;22;1295;Turkey;4;6.227272727;tutte le disponibili
+T033;4;Man-in-a-hole;4;Man-in-a-hole;15;1162;Turkey;3.695652174;5.52173913;tutte le disponibili
+T036;4;Man-in-a-hole;4;Man-in-a-hole;16;1152;Turkey;6.541666667;5.916666667;tutte le disponibili
+FI2;5;Icarus;5;Icarus;14;1031;Finland;2.791666667;6.541666667;tutte le disponibili
+FR37;5;Icarus;5;Icarus;8;873;France;2.181818182;4.181818182;reintegrata (IT < 900 caratteri)
+FR72;5;Icarus;5;Icarus;7;936;France;3.541666667;4.625;tutte le disponibili
+FR89;5;Icarus;5;Icarus;14;934;France;2.181818182;4.818181818;tutte le disponibili
+G306;5;Icarus;5;Icarus;14;993;Germany;3.772727273;3.045454545;tutte le disponibili
+G317;5;Icarus;5;Icarus;15;1018;Germany;2.84;4.44;tutte le disponibili
+G328;5;Icarus;5;Icarus;11;1026;Germany;3.35;3.7;tutte le disponibili
+P01;5;Icarus;5;Icarus;17;1429;Portugal;4.291666667;4.208333333;tutte le disponibili
+SP009;5;Icarus;5;Icarus;13;1097;Spain;4.2;5.04;tutte le disponibili
+SP022;5;Icarus;5;Icarus;11;999;Spain;3.818181818;3;tutte le disponibili
+SW020;5;Icarus;5;Icarus;10;923;Switzerland;3.863636364;5.227272727;tutte le disponibili
+SW024;5;Icarus;5;Icarus;11;890;Switzerland;4.652173913;4.347826087;reintegrata (IT < 900 caratteri)
+T011;5;Icarus;5;Icarus;22;1109;Turkey;4.458333333;3.041666667;tutte le disponibili
+T025;5;Icarus;5;Icarus;19;1263;Turkey;4.217391304;3.826086957;tutte le disponibili
+T037;5;Icarus;5;Icarus;16;1126;Turkey;3.826086957;4.086956522;tutte le disponibili
+FR4;6;Oedipus + Cinderella + nessun arco chiaro;7;Cinderella;9;1000;France;5.739130435;2.608695652;tutte le Oedipus/Cinderella
+G336;6;Oedipus + Cinderella + nessun arco chiaro;8;Nessun arco chiaro;28;1032;Germany;3.52173913;5.608695652;estratta a caso
+P21;6;Oedipus + Cinderella + nessun arco chiaro;6;Oedipus;22;1491;Portugal;3.590909091;5.318181818;tutte le Oedipus/Cinderella
+P25;6;Oedipus + Cinderella + nessun arco chiaro;8;Nessun arco chiaro;23;1445;Portugal;4.375;4.583333333;estratta a caso
+P29;6;Oedipus + Cinderella + nessun arco chiaro;7;Cinderella;14;1262;Portugal;7.05;3.95;tutte le Oedipus/Cinderella
+SP012;6;Oedipus + Cinderella + nessun arco chiaro;7;Cinderella;11;1159;Spain;7.045454545;3.409090909;tutte le Oedipus/Cinderella
+SP028;6;Oedipus + Cinderella + nessun arco chiaro;7;Cinderella;13;1296;Spain;4.727272727;3.909090909;tutte le Oedipus/Cinderella
+SP030;6;Oedipus + Cinderella + nessun arco chiaro;8;Nessun arco chiaro;24;958;Spain;3.434782609;5.304347826;estratta a caso
+SP39;6;Oedipus + Cinderella + nessun arco chiaro;8;Nessun arco chiaro;12;992;Spain;3.25;4.708333333;estratta a caso
+SW003;6;Oedipus + Cinderella + nessun arco chiaro;8;Nessun arco chiaro;14;902;Switzerland;5.4;3;estratta a caso
+T003;6;Oedipus + Cinderella + nessun arco chiaro;8;Nessun arco chiaro;14;1122;Turkey;5.086956522;3.913043478;estratta a caso
+T004;6;Oedipus + Cinderella + nessun arco chiaro;6;Oedipus;18;1143;Turkey;3.083333333;5.708333333;tutte le Oedipus/Cinderella
+T010;6;Oedipus + Cinderella + nessun arco chiaro;7;Cinderella;16;1105;Turkey;4.25;5.041666667;tutte le Oedipus/Cinderella
+T032;6;Oedipus + Cinderella + nessun arco chiaro;8;Nessun arco chiaro;21;1262;Turkey;4.25;4.166666667;estratta a caso
+T045;6;Oedipus + Cinderella + nessun arco chiaro;8;Nessun arco chiaro;12;1110;Turkey;4.416666667;3.166666667;estratta a caso
