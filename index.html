@@ -112,6 +112,21 @@ ol.steps { margin: 0; padding-left: 1.3rem; display: grid; gap: 6px; }
 .tip ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 2px; }
 /* scala già votata: bloccata finché non compare la domanda successiva (niente ripensamenti) */
 .scale:disabled label { cursor: default; }
+/* Questionari: una pagina per questionario, ogni item con la sua riga di risposte */
+ol.q-item { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: qi; }
+.q-riga { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; counter-increment: qi; }
+.q-riga.manca { border-color: var(--warn); box-shadow: 0 0 0 2px color-mix(in srgb, var(--warn) 30%, transparent); }
+.q-testo { font-size: 1rem; line-height: 1.45; }
+.q-testo::before { content: counter(qi) ". "; color: var(--muted); font-variant-numeric: tabular-nums; }
+.q-opts { display: grid; grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr)); gap: 6px; }   /* colonne sempre uguali */
+.q-opts input { position: absolute; opacity: 0; pointer-events: none; }
+.q-opts label { display: grid; justify-items: center; gap: 2px; padding: 8px 1px; border: 1px solid var(--line); border-radius: 8px;
+                cursor: pointer; font: 600 .95rem var(--font-mono); text-align: center; user-select: none; }
+.q-opts label small { font: 400 .68rem/1.25 var(--font-ui); color: var(--muted); overflow-wrap: break-word; hyphens: manual;   /* va a capo solo nei punti segnati con \u00ad */ }
+.q-opts input:checked + label { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.q-opts input:checked + label small { color: inherit; }
+.q-opts input:focus-visible + label { outline: 3px solid var(--accent); outline-offset: 2px; }
+
 .scale:disabled label:hover { color: inherit; }
 .scale:disabled input:checked + label { color: var(--c); }
 .scale .opts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
@@ -2153,13 +2168,156 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
 ]
 </script>
 
+<!--
+  ============================================================
+  QUESTIONARI (compilati all'inizio, nell'ordine di questa lista)
+  Per ogni questionario:
+   - "id": nome breve, diventa il nome del foglio dei voti ("voti_" + id) nel Google Sheet;
+   - "titolo": titolo mostrato in alto;
+   - "istruzioni": il testo delle istruzioni, COPIATO dalla versione italiana validata;
+   - "valori": i punteggi delle risposte, nell'ordine in cui compaiono
+     (PANAS 1–5, STAI-Y1 1–4, BSI-18 0–4);
+   - "etichette": il testo sotto ogni risposta (es. "Per nulla"), stesso numero di "valori";
+     se resta "" si vede solo il numero;
+   - "item": i testi degli item, COPIATI dalla versione validata, NELL'ORDINE ORIGINALE
+     (l'ordine serve per calcolare i punteggi: item invertiti, sottoscale).
+  Sostituisci ogni testo "[DA INSERIRE: …]". Finché ne resta anche uno, sotto il pulsante
+  iniziale compare un avviso arancione (i questionari funzionano lo stesso, per le prove).
+  Attenzione alle virgolette: dentro un testo usa ’ oppure \" al posto di ".
+  ============================================================
+-->
+<script type="application/json" id="questionari">
+[
+ {
+  "id": "PANAS",
+  "titolo": "Questionario 1 · PANAS",
+  "fonte": "PROVVISORIO: versione dall'immagine fornita (traduzione dal portoghese) con errori corretti; da sostituire con la versione italiana validata (Terracciano, McCrae e Costa, 2003). Ordine degli item come nella versione brasiliana: dispari = affetto positivo, pari = affetto negativo.",
+  "istruzioni": "Questo questionario consiste in un insieme di parole che descrivono sentimenti ed emozioni. Leggi ogni parola e indica quanto ti sei sentito/a così negli ultimi giorni, scegliendo una delle risposte: 1 = per niente o molto poco, 2 = un po', 3 = moderatamente, 4 = molto, 5 = moltissimo.",
+  "valori": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "etichette": [
+   "Per niente o molto poco",
+   "Un po'",
+   "Modera­tamente",
+   "Molto",
+   "Moltis­simo"
+  ],
+  "item": [
+   "Attivo/a",
+   "Imbarazzato/a",
+   "Attento/a",
+   "Afflitto/a",
+   "Determinato/a",
+   "Colpevole",
+   "Eccitato/a",
+   "Irritato/a",
+   "Interessato/a",
+   "Impaurito/a",
+   "Orgoglioso/a",
+   "Ostile",
+   "Vigile",
+   "Inquieto/a",
+   "Entusiasta",
+   "Nervoso/a",
+   "Forte",
+   "Spaventato/a",
+   "Ispirato/a",
+   "Turbato/a"
+  ]
+ },
+{
+  "id": "STAI-Y1",
+  "titolo": "Questionario 2 · STAI forma Y1",
+  "istruzioni": "ISTRUZIONI: Sono qui di seguito riportate alcune frasi che le persone spesso usano per descriversi. Legga ciascuna frase e poi contrassegni con una crocetta il numero che indica come lei si SENTE ADESSO, CIOÈ IN QUESTO MOMENTO. Non ci sono risposte giuste o sbagliate. Non impieghi troppo tempo per rispondere alle domande e dia la risposta che le sembra descrivere meglio i suoi attuali stati d'animo.",
+  "valori": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "etichette": [
+    "Per nulla",
+    "Un po'",
+    "Abbastanza",
+    "Moltissimo"
+  ],
+  "item": [
+    "Mi sento calma",
+    "Mi sento sicura",
+    "Sono tesa",
+    "Mi sento sotto pressione",
+    "Mi sento tranquilla",
+    "Mi sento turbata",
+    "Sono attualmente preoccupata per possibili disgrazie",
+    "Mi sento soddisfatta",
+    "Mi sento intimorita",
+    "Mi sento a mio agio",
+    "Mi sento sicura di me",
+    "Mi sento nervosa",
+    "Sono agitata",
+    "Mi sento indecisa",
+    "Sono rilassata",
+    "Mi sento contenta",
+    "Sono preoccupata",
+    "Mi sento confusa",
+    "Mi sento distesa",
+    "Mi sento bene"
+  ]
+},
+ {
+  "id": "BSI-18",
+  "titolo": "Questionario 3 · BSI-18",
+  "istruzioni": "INSTRUCTIONS: Below is a list of problems people sometimes have. Read each one carefully and fill in the circle that best describes HOW MUCH THAT PROBLEM HAS DISTRESSED OR BOTHERED YOU DURING THE PAST 7 DAYS INCLUDING TODAY. Blacken the circle for only one number for each problem. Do not skip any items. If you change your mind, erase your first mark carefully and then fill in your new choice. Read the example before beginning. If you have any questions, please ask them now.",
+  "valori": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "etichette": [
+    "Not at all",
+    "A little bit",
+    "Moderately",
+    "Quite a bit",
+    "Extremely"
+  ],
+  "item": [
+    "Faintness or dizziness",
+    "Feeling no interest in things",
+    "Nervousness or shakiness inside",
+    "Pains in heart or chest",
+    "Feeling lonely",
+    "Feeling tense or keyed up",
+    "Nausea or upset stomach",
+    "Feeling blue",
+    "Suddenly scared for no reason",
+    "Trouble getting your breath",
+    "Feelings of worthlessness",
+    "Spells of terror or panic",
+    "Numbness or tingling in parts of your body",
+    "Feeling hopeless about the future",
+    "Feeling so restless you couldn't sit still",
+    "Feeling weak in parts of your body",
+    "Thoughts of ending your life",
+    "Feeling fearful"
+  ]
+}
+]
+</script>
+
 <main class="wrap" id="app">
   <!-- 1. INTRODUZIONE -->
   <div id="s-intro" class="wrap" style="padding:0">
     <header class="block" style="display:grid;gap:10px">
       <p class="eyebrow">Studio sulle emozioni · Università di Pisa</p>
       <h1>Come ti fa sentire questa storia?</h1>
-      <p class="lead">Leggerai <span class="n-storie">12</span> storie scelte a caso. Le storie sono brevi, di poche frasi ciascuna, e compaiono una frase alla volta.</p>
+      <p class="lead">Leggerai <span class="n-storie">12</span> storie scelte a caso. Le storie sono brevi, di poche frasi ciascuna, e compaiono una frase alla volta. Prima di iniziare ti sarà chiesto di compilare alcuni <b>questionari anonimi</b>.</p>
       <div class="istruzioni">
         <p>Dopo <b>ogni frase</b> ti chiederemo di descrivere, con tre voti, <b>come ti senti tu in questo momento</b>, subito dopo averla letta: cioè l'emozione che quella frase ha suscitato <b>in te</b>.</p>
         <p><b>Non devi dare un voto alla frase</b> (se è triste o allegra, se descrive una situazione tranquilla o pericolosa…): fermati un attimo, ascolta il tuo stato d'animo e descrivi quello. Se la frase non ti ha fatto nessun effetto, va benissimo dirlo.</p>
@@ -2193,6 +2351,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     <section class="block" aria-labelledby="h-cosa">
       <h2 id="h-cosa">Cosa devi fare</h2>
       <ol class="steps">
+        <li>Per prima cosa compilerai tre brevi <b>questionari anonimi</b>, uno per pagina. Quando li hai completati, premi <b>Inizia</b>.</li>
         <li>Per prendere confidenza con le domande, farai prima una <b>frase di prova</b>: la sua risposta non viene salvata.</li>
         <li>Prima di iniziare ti chiederemo <b>come ti senti in questo momento</b>, con due scale: valenza e arousal.</li>
         <li>Ogni storia è breve e viene mostrata <b>una frase alla volta</b>. Sullo schermo compare solo la frase da leggere: leggila con attenzione.</li>
@@ -2212,10 +2371,39 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     </section>
 
     <div class="row" id="riga-inizia">
-      <button class="btn" id="b-start" type="button">Inizia</button>
+      <button class="btn" id="b-start" type="button">Compila i questionari</button>
       <span class="note" id="pool-info"></span>
     </div>
 
+  </div>
+
+  <!-- 1a. QUESTIONARI (PANAS, STAI-Y1, BSI-18): una pagina per questionario -->
+  <div id="s-quest" class="wrap" style="padding:0" hidden>
+    <div class="progress">
+      <div class="meta"><span id="q-label">Questionario 1 di 3</span><span id="q-pct"></span></div>
+      <div class="bar"><i id="q-bar"></i></div>
+    </div>
+    <header style="display:grid;gap:10px">
+      <h2 id="q-titolo"></h2>
+      <p class="lead" id="q-istruzioni"></p>
+    </header>
+    <ol class="q-item" id="q-item"></ol>
+    <div class="row">
+      <button class="btn" id="b-q-avanti" type="button">Avanti</button>
+      <span class="note" id="q-msg"></span>
+    </div>
+  </div>
+
+  <!-- 1b. FINE DEI QUESTIONARI: da qui si inizia lo studio -->
+  <div id="s-quest-fine" class="wrap" style="padding:0" hidden>
+    <header style="display:grid;gap:10px">
+      <p class="eyebrow">Questionari completati</p>
+      <h2>Grazie, ora puoi iniziare</h2>
+      <p class="lead">Ora inizia lo studio: prima una frase di prova, poi le storie, una frase alla volta.</p>
+    </header>
+    <div class="row">
+      <button class="btn" id="b-inizia" type="button">Inizia</button>
+    </div>
   </div>
 
   <!-- 2. STORIA + VALUTAZIONE -->
@@ -2393,8 +2581,8 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     inizio: null,
     fine: null,
     storie: [],
-    risposte: [],  // {ordine, id_storia, gruppo, tipo_storia, n_frase, frase, valenza, arousal, dominanza, immagine, tempo_ms, + COLONNE_MISURE}
-    umore: []      // stato d'animo (protocollo A): {momento, ordine_storia, id_storia_precedente, id_storia_successiva, pausa_s, valenza, arousal, tempo_ms, + COLONNE_MISURE}
+    risposte: [],  // {ordine, id_storia, gruppo, tipo_storia, n_frase, frase, valenza, arousal, dominanza, immagine, + COLONNE_MISURE}
+    umore: []      // stato d'animo (protocollo A): {momento, ordine_storia, id_storia_precedente, id_storia_successiva, pausa_s, valenza, arousal, + COLONNE_MISURE}
   };
   let idx = 0, fidx = 0, tStart = 0;   // idx = storia corrente, fidx = frase corrente
   // coda dei lotti da inviare al foglio: un lotto per ogni risposta (voto di frase o stato d'animo)
@@ -2461,7 +2649,8 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
 
   // ---------- misure di risposta ----------
   // Il primo tocco su una figura è DEFINITIVO: la scala si blocca e non si può tornare indietro.
-  // Per ogni frase (e ogni stato d'animo) si registrano, oltre ai voti:
+  // Per ogni frase (e ogni stato d'animo) si registrano, oltre ai voti (non c'è un tempo totale
+  // della schermata: solo il tempo di ciascun parametro):
   //  - rt_<dim>_ms: tempo di risposta su quella scala, dalla sua comparsa al tocco della figura.
   //    È misurato con un cronometro PER SCALA, che corre solo mentre quella scala è sullo schermo
   //    e si ferma se la pagina viene nascosta (altra scheda o app).
@@ -2582,7 +2771,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   });
 
   function show(screen) {
-    for (const s of ["s-intro", "s-story", "s-prova", "s-pausa", "s-end"]) $(s).hidden = s !== screen;
+    for (const s of ["s-intro", "s-quest", "s-quest-fine", "s-story", "s-prova", "s-pausa", "s-end"]) $(s).hidden = s !== screen;
     window.scrollTo({ top: 0 });
   }
 
@@ -2633,6 +2822,107 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     fase_ = "frase"; salvaStato();
   }
 
+  // ---------- questionari (PANAS, STAI-Y1, BSI-18), compilati una volta all'inizio ----------
+  // Ogni questionario è una pagina con tutti i suoi item; si va avanti solo se ogni item ha una risposta.
+  // Per ognuno si registrano: inizio (comparsa della pagina), fine (pressione di "Avanti" con tutto
+  // compilato) e durata_ms = fine − inizio. Alla fine di ogni questionario i voti partono subito
+  // verso il foglio (Code.gs: foglio "questionari" per i tempi, "voti_<id>" per i voti).
+  let QUEST = [];
+  try { QUEST = JSON.parse(document.getElementById("questionari").textContent); } catch (e) { QUEST = []; console.warn("Blocco questionari non valido: " + e.message); }
+  QUEST = QUEST.filter(q => q && q.id && Array.isArray(q.item) && q.item.length && Array.isArray(q.valori) && q.valori.length);
+  if (JSON.stringify(QUEST).indexOf("[DA INSERIRE") !== -1) {
+    const info = $("pool-info");
+    info.textContent += " · ⚠ testi dei questionari non ancora inseriti";
+    info.style.color = "var(--warn)"; info.style.fontWeight = "600";
+  }
+
+  // stato dei questionari dentro la sessione, così viene salvato nel browser e si può riprendere
+  function statoQ() {
+    if (!sessione.questionari) sessione.questionari = { qidx: 0, risposte: {}, inizio: {}, fine: {} };
+    return sessione.questionari;
+  }
+
+  function mostraQuestionario() {
+    const st = statoQ(), q = QUEST[st.qidx];
+    show("s-quest");
+    $("q-label").textContent = "Questionario " + (st.qidx + 1) + " di " + QUEST.length;
+    $("q-bar").style.width = Math.round(st.qidx / QUEST.length * 100) + "%";
+    $("q-titolo").textContent = q.titolo || q.id;
+    $("q-istruzioni").textContent = q.istruzioni || "";
+    $("q-msg").textContent = "";
+    if (!st.inizio[q.id]) st.inizio[q.id] = new Date().toISOString();   // il tempo parte alla prima comparsa
+    const date = st.risposte[q.id] || (st.risposte[q.id] = {});
+    const lista = $("q-item");
+    lista.textContent = "";
+    q.item.forEach((testo, i) => {
+      const n = String(i + 1);
+      const li = document.createElement("li");
+      li.className = "q-riga"; li.dataset.item = n;
+      const p = document.createElement("p");
+      p.className = "q-testo"; p.textContent = testo; p.id = "q-t-" + n;
+      const opts = document.createElement("div");
+      opts.className = "q-opts"; opts.setAttribute("role", "radiogroup"); opts.setAttribute("aria-labelledby", p.id);
+      opts.style.setProperty("--n", q.valori.length);
+      q.valori.forEach((v, j) => {
+        const id = "q-" + q.id + "-" + n + "-" + j;
+        const inp = document.createElement("input");
+        inp.type = "radio"; inp.name = "q-" + n; inp.value = v; inp.id = id;
+        if (date[n] === v) inp.checked = true;                         // risposta già data (ripresa)
+        const lab = document.createElement("label");
+        lab.htmlFor = id;
+        const et = q.etichette && q.etichette[j] ? q.etichette[j] : "";
+        lab.innerHTML = '<span>' + v + '</span>' + (et ? '<small></small>' : "");
+        if (et) lab.querySelector("small").textContent = et;
+        opts.append(inp, lab);
+      });
+      li.append(p, opts);
+      lista.append(li);
+    });
+    fase_ = "questionari"; salvaStato();
+  }
+
+  // ogni risposta viene ricordata subito (nel browser), così chiudendo la pagina non si perde
+  $("q-item").addEventListener("change", e => {
+    const st = statoQ(), q = QUEST[st.qidx], li = e.target.closest(".q-riga");
+    if (!q || !li) return;
+    st.risposte[q.id][li.dataset.item] = Number(e.target.value);
+    li.classList.remove("manca");
+    salvaStato();
+  });
+
+  $("b-q-avanti").addEventListener("click", () => {
+    const st = statoQ(), q = QUEST[st.qidx], date = st.risposte[q.id] || {};
+    const mancanti = Array.from($("q-item").children).filter(li => date[li.dataset.item] == null);
+    mancanti.forEach(li => li.classList.add("manca"));
+    if (mancanti.length) {
+      $("q-msg").textContent = "Rispondi a tutte le domande (ne mancano " + mancanti.length + ").";
+      mancanti[0].scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
+    st.fine[q.id] = new Date().toISOString();
+    const durata = Date.parse(st.fine[q.id]) - Date.parse(st.inizio[q.id]);
+    // i voti di questo questionario partono subito verso il foglio
+    accodaLotto([], [{ questionario: q.id, inizio: st.inizio[q.id], fine: st.fine[q.id],
+                       durata_ms: isFinite(durata) ? durata : "", risposte: date }]);
+    inviaCoda();
+    st.qidx++;
+    if (st.qidx < QUEST.length) mostraQuestionario();
+    else fineQuestionari();
+  });
+
+  function fineQuestionari() {
+    show("s-quest-fine");
+    fase_ = "dopo_questionari"; salvaStato();
+  }
+
+  // pulsante iniziale: si crea la sessione e si parte con i questionari
+  function avviaQuestionari() {
+    sessione.inizio = new Date().toISOString();
+    coda = []; nLotto = 0; umoreInviato = 0;
+    statoQ();
+    if (QUEST.length) mostraQuestionario(); else fineQuestionari();
+  }
+
   // ---------- frase di prova (prima dello studio, non salvata) ----------
   function avviaProva() {
     show("s-story");
@@ -2666,15 +2956,16 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   }
   $("b-start").addEventListener("click", () => {
     if (POOL.length === 0) { $("pool-info").textContent = "Nessuna storia caricata nel dataset."; return; }
-    avviaProva();
+    avviaQuestionari();
   });
+  $("b-inizia").addEventListener("click", avviaProva);
   $("b-prova-rifai").addEventListener("click", avviaProva);
 
   // inizio dello studio vero, dopo la prova
   $("b-prova-ok").addEventListener("click", () => {
     sessione.storie = estraiSessione();
-    sessione.inizio = new Date().toISOString();
-    idx = 0; fidx = 0; fatte = 0; coda = []; nLotto = 0; umoreInviato = 0;
+    sessione.inizio = sessione.inizio || new Date().toISOString();   // di solito già fissato dai questionari
+    idx = 0; fidx = 0; fatte = 0;                    // la coda resta: può contenere voti dei questionari
     totFrasi = sessione.storie.reduce((n, s) => n + s.frasi.length, 0);
     iniziaUmore();               // protocollo A: stato d'animo di partenza
   });
@@ -2712,7 +3003,6 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       id_storia_successiva: idx < n ? sessione.storie[idx].id : "",
       pausa_s: idx > 0 ? Math.round(pausaMisurata * 10) / 10 : 0,
       valenza: v.valenza, arousal: v.arousal,
-      tempo_ms: Math.round(performance.now() - tStart),
       ...campiMisura()
     });
     accodaLotto([]);                                 // anche lo stato d'animo parte subito
@@ -2753,7 +3043,6 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       n_frase: fidx + 1, frase: s.frasi[fidx],
       valenza: v.valenza, arousal: v.arousal, dominanza: v.dominanza,
       immagine: (s.codici && s.codici[fidx]) || (s.immagini && s.immagini[fidx]) || "",
-      tempo_ms: Math.round(performance.now() - tStart),
       ...campiMisura()
     });
     fatte++;
@@ -2767,13 +3056,13 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
 
   // ---------- CSV ----------
   const HEADER = ["tipo", "sessione", "inizio", "fine", "ordine_storia", "id_storia", "gruppo", "tipo_storia", "n_frase", "frase",
-                  "valenza", "arousal", "dominanza", "tempo_ms", "momento", "id_storia_precedente", "pausa_s", "versione", "immagine"].concat(COLONNE_MISURE);
+                  "valenza", "arousal", "dominanza", "momento", "id_storia_precedente", "pausa_s", "versione", "immagine"].concat(COLONNE_MISURE);
   const q = x => { const s = String(x ?? ""); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
   function righeSessione(ses) {
     const frasi = ses.risposte.map(r => ["frase", ses.id, ses.inizio, ses.fine, r.ordine, r.id_storia, r.gruppo, r.tipo_storia, r.n_frase, r.frase,
-      r.valenza, r.arousal, r.dominanza, r.tempo_ms, "", "", "", VERSIONE, r.immagine || ""].concat(COLONNE_MISURE.map(k => r[k] ?? "")));
+      r.valenza, r.arousal, r.dominanza, "", "", "", VERSIONE, r.immagine || ""].concat(COLONNE_MISURE.map(k => r[k] ?? "")));
     const umore = (ses.umore || []).map(u => ["umore", ses.id, ses.inizio, ses.fine, u.ordine_storia, u.id_storia_successiva, "", "", "", "",
-      u.valenza, u.arousal, "", u.tempo_ms, u.momento, u.id_storia_precedente, u.pausa_s, VERSIONE, ""].concat(COLONNE_MISURE.map(k => u[k] ?? "")));
+      u.valenza, u.arousal, "", u.momento, u.id_storia_precedente, u.pausa_s, VERSIONE, ""].concat(COLONNE_MISURE.map(k => u[k] ?? "")));
     return frasi.concat(umore);
   }
   function toCSV(rows) { return [HEADER, ...rows].map(r => r.map(q).join(",")).join("\n"); }
@@ -2787,12 +3076,14 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   // quindi non parte la richiesta preliminare CORS (preflight) che Apps Script non gestisce.
   // risposte = voti di frase da inviare in questo lotto ([] se il lotto è solo uno stato d'animo);
   // ogni lotto porta anche gli stati d'animo registrati e non ancora inviati
-  function accodaLotto(risposte) {
+  // questionari = questionari completati da inviare in questo lotto (facoltativo)
+  function accodaLotto(risposte, questionari) {
     nLotto++;
     coda.push({
       lotto: sessione.id + "-" + nLotto,
       risposte: risposte,
-      umore: sessione.umore.slice(umoreInviato)
+      umore: sessione.umore.slice(umoreInviato),
+      questionari: questionari || []
     });
     umoreInviato = sessione.umore.length;
     salvaStato();
@@ -2820,7 +3111,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
         lotto: l.lotto,
         sessione: sessione.id, inizio: sessione.inizio, fine: sessione.fine || "",
         user_agent: navigator.userAgent, versione: VERSIONE,
-        risposte: l.risposte, umore: l.umore
+        risposte: l.risposte, umore: l.umore, questionari: l.questionari || []
       })
     });
     const out = await res.json();
@@ -2901,7 +3192,8 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   function leggiStato() {
     try {
       const st = JSON.parse(localStorage.getItem(CHIAVE_STATO));
-      if (st && st.sessione && Array.isArray(st.sessione.storie) && st.sessione.storie.length) return st;
+      if (st && st.sessione && Array.isArray(st.sessione.storie) &&
+          (st.sessione.storie.length || st.fase === "questionari" || st.fase === "dopo_questionari")) return st;
     } catch (e) {}
     return null;
   }
@@ -2912,7 +3204,9 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     coda = st.coda || []; nLotto = st.nLotto || 0; umoreInviato = st.umoreInviato || 0;
     inviaCoda();                                     // eventuali risposte rimaste da inviare
     const n = sessione.storie.length;
-    if (st.fase === "fine") { $("dump").value = toCSV(righeSessione(sessione)); show("s-end"); tentaSalvataggio(); }
+    if (st.fase === "questionari") { if (statoQ().qidx < QUEST.length) mostraQuestionario(); else fineQuestionari(); }
+    else if (st.fase === "dopo_questionari") fineQuestionari();
+    else if (st.fase === "fine") { $("dump").value = toCSV(righeSessione(sessione)); show("s-end"); tentaSalvataggio(); }
     else if (st.fase === "pausa") avviaPausa();      // la pausa riparte da capo (20 s)
     else if (st.fase === "frase" && idx < n) { show("s-story"); renderFrase(); }
     else iniziaUmore();                              // stato d'animo da dare (inizio, dopo pausa o fine)
@@ -2924,7 +3218,10 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     if (stato0.fase === "fine") riprendi(stato0);    // finita ma non ancora tutta inviata
     else {
       const n = stato0.sessione.storie.length;
-      $("riprendi-dove").textContent = stato0.fase === "frase"
+      $("riprendi-dove").textContent = stato0.fase === "questionari"
+        ? "Stavi compilando i questionari (" + Math.min((stato0.sessione.questionari || {}).qidx + 1 || 1, QUEST.length) + " di " + QUEST.length + ")."
+        : stato0.fase === "dopo_questionari" ? "Hai completato i questionari: puoi iniziare lo studio."
+        : stato0.fase === "frase"
         ? "Eri alla storia " + (stato0.idx + 1) + " di " + n + ", frase " + (stato0.fidx + 1) + "."
         : "Hai completato " + stato0.idx + " storie su " + n + ".";
       $("riprendi").hidden = false; $("riga-inizia").hidden = true;
