@@ -128,7 +128,7 @@ ol.q-item { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; c
 .q-opts input:checked + label small { color: inherit; }
 .q-opts input:focus-visible + label { outline: 3px solid var(--accent); outline-offset: 2px; }
 
-@media (hover: hover) and (pointer: fine) { .scale:disabled label:hover { color: inherit; } }
+
 .scale:disabled input:checked + label { color: var(--c); }
 .scale .opts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
 .scale input { position: absolute; opacity: 0; pointer-events: none; }
@@ -160,7 +160,7 @@ ol.q-item { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; c
 .scale label { border-color: transparent; background: transparent; }
 /* colore al passaggio del mouse: SOLO con un vero mouse. Sui touch screen il browser tiene "attivo"
    l'hover dell'ultimo punto toccato, e la figura toccata prima restava colorata nella schermata dopo */
-@media (hover: hover) and (pointer: fine) { .scale label:hover { color: var(--c); } }
+/* nessun colore al passaggio del mouse: sembrava un voto rimasto dalla schermata precedente */
 /* scelta: riquadro più spesso e leggermente colorato, figura e numero nel colore della scala */
 .scale input:checked + label { background: transparent; border-color: transparent; color: var(--c); }
 .scale input:checked + label .sam-box { border-width: 3px; background: color-mix(in srgb, var(--c) 14%, transparent); }
@@ -181,6 +181,34 @@ ol.q-item { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; c
 .timer .sec { position: absolute; inset: 0; display: grid; place-items: center; font: 600 3rem var(--font-mono); font-variant-numeric: tabular-nums; color: var(--fg); }
 /* immagine della frase (protocollo B), sopra il testo */
 .story .frase-img { display: block; width: 100%; max-height: 45vh; object-fit: contain; border-radius: 8px; margin: 0 0 16px; background: var(--bg); }
+/* ---- schermata di voto adattata all'altezza dello schermo ----
+   Con la classe "voto" sul <body> (frase di prova, frasi, stato d'animo) spazi e margini si stringono,
+   e la dimensione delle figure SAM (--sam-w) e del testo della frase (--fs-frase) viene calcolata
+   dallo script (adattaSchermo) in modo che frase + tre righe di figure stiano tutte in verticale. */
+body.voto main.wrap { padding-block: 10px; gap: 10px; }
+body.voto #s-story { gap: 10px; }
+body.voto .story { padding: 12px 16px; font-size: var(--fs-frase, 1.15rem); line-height: 1.5; }
+body.voto .story .frase-img { max-height: 28vh; margin-bottom: 8px; }
+body.voto .scales { gap: 8px; }
+body.voto .scale { gap: 2px; }
+body.voto .scale legend { font-size: .95rem; }
+body.voto .scale .poles { font-size: .72rem; }
+body.voto .info { width: 1.4rem; height: 1.4rem; }
+.scale .sam-box { max-width: var(--sam-w, 72px); }
+.scale .sam.sam-dom { max-width: var(--sam-dom-w, 80px); }
+/* ---- avviso "tieni il telefono in verticale" ----
+   Compare solo sui telefoni (schermo touch, poco alto) girati in orizzontale e copre tutta la pagina.
+   La stessa condizione è usata dallo script (ORIZZONTALE) per fermare il cronometro. */
+#ruota { display: none; position: fixed; inset: 0; z-index: 50; background: var(--bg); color: var(--fg);
+         place-items: center; align-content: center; gap: 14px; padding: 24px; text-align: center; }
+#ruota svg { width: 64px; height: 64px; color: var(--accent); }
+#ruota p { max-width: 26rem; font-size: 1.05rem; }
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  #ruota { display: grid; }
+  body { overflow: hidden; }
+}
+
+
 /* domanda sullo stato d'animo al posto della frase */
 .story.umore { font-style: italic; }
 
@@ -2314,6 +2342,16 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
 ]
 </script>
 
+<!-- avviso per i telefoni girati in orizzontale (si vede solo in quel caso, vedi CSS #ruota) -->
+<div id="ruota" role="alertdialog" aria-live="assertive">
+  <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <rect x="20" y="6" width="24" height="44" rx="4"></rect><line x1="29" y1="43" x2="35" y2="43"></line>
+    <path d="M10 40 a24 24 0 0 0 16 18"></path><polyline points="20 58 26 58 26 52"></polyline>
+  </svg>
+  <p><b>Tieni il telefono in verticale</b> per continuare.</p>
+  <p class="note">Appena lo rimetti dritto riprendi esattamente da dove eri.</p>
+</div>
+
 <main class="wrap" id="app">
   <!-- 1. INTRODUZIONE -->
   <div id="s-intro" class="wrap" style="padding:0">
@@ -2514,6 +2552,25 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   // con ?debug alla fine dell'indirizzo compare in basso l'esito di ogni invio al foglio
   const DEBUG = /[?&]debug\b/.test(location.search);
 
+  // ---------- telefono in verticale ----------
+  // ORIZZONTALE: vero quando un telefono è girato in orizzontale (stessa condizione del CSS di #ruota).
+  // In quel caso la pagina è coperta dall'avviso: per i tempi conta come "pagina nascosta".
+  const ORIZZONTALE = window.matchMedia("(orientation: landscape) and (max-height: 500px) and (pointer: coarse)");
+  const inPausaSchermo = () => document.hidden || ORIZZONTALE.matches;
+
+  // Su Android (Chrome) una pagina può bloccare l'orientamento solo a schermo intero, e lo schermo
+  // intero si può chiedere solo in risposta a un tocco: per questo si chiama dai pulsanti.
+  // Su iPhone (e se il browser rifiuta) non succede niente: resta l'avviso qui sopra.
+  function bloccaVerticale() {
+    if (!window.matchMedia("(pointer: coarse)").matches) return;      // solo telefoni e tablet
+    const el = document.documentElement;
+    const blocca = () => { try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock("portrait").catch(() => {}); } catch (e) {} };
+    try {
+      if (!document.fullscreenElement && el.requestFullscreen) el.requestFullscreen({ navigationUI: "hide" }).then(blocca, () => {});
+      else blocca();
+    } catch (e) {}
+  }
+
   // ---------- dati ----------
   let POOL = [];
   try { POOL = JSON.parse(document.getElementById("storie").textContent); } catch (e) { POOL = []; }
@@ -2651,7 +2708,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   function nuovaMisura() {
     // attivo = ms accumulati con la schermata visibile; dal = istante in cui il cronometro è ripartito;
     // ultimo = tempo del voto precedente (da lì parte il tempo del voto successivo)
-    misura = { n_info: 0, nascosta: document.hidden ? 1 : 0, attivo: 0, dal: document.hidden ? null : performance.now(),
+    misura = { n_info: 0, nascosta: inPausaSchermo() ? 1 : 0, attivo: 0, dal: inPausaSchermo() ? null : performance.now(),
                ultimo: 0, ordine: [], rt: {} };
   }
   function tempoSchermata() { return misura.attivo + (misura.dal != null ? performance.now() - misura.dal : 0); }
@@ -2663,12 +2720,15 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     o.ordine_voti = misura.ordine.map(d => SIGLA[d]).join("-");
     return o;
   }
-  // pagina nascosta (altra scheda o app): si segna e il cronometro si mette in pausa finché non torna visibile
-  document.addEventListener("visibilitychange", () => {
+  // pagina nascosta (altra scheda o app) o telefono in orizzontale (avviso a tutto schermo): si segna
+  // e il cronometro si mette in pausa finché la pagina non torna visibile e il telefono in verticale
+  function aggiornaPausaCrono() {
     if (!misura) return;
-    if (document.hidden) { misura.nascosta = 1; if (misura.dal != null) { misura.attivo += performance.now() - misura.dal; misura.dal = null; } }
+    if (inPausaSchermo()) { misura.nascosta = 1; if (misura.dal != null) { misura.attivo += performance.now() - misura.dal; misura.dal = null; } }
     else if (misura.dal == null) misura.dal = performance.now();
-  });
+  }
+  document.addEventListener("visibilitychange", aggiornaPausaCrono);
+  ORIZZONTALE.addEventListener("change", aggiornaPausaCrono);
 
   // ---------- pulsante (i): criterio di valutazione di ogni domanda ----------
   // Su computer si apre passandoci sopra col mouse (e si chiude uscendo); un clic lo tiene aperto.
@@ -2727,6 +2787,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     SCALE.forEach(f => { f.hidden = !attive.includes(f); f.disabled = false; });
     chiudiInfo();
     inAvanzamento = false;
+    adattaSchermo();                                   // frase + tre scale nell'altezza dello schermo
   }
 
   // Scelta di una figura: si registra il tempo del voto e la sua posizione nell'ordine, la scala
@@ -2757,8 +2818,34 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
 
   function show(screen) {
     for (const s of ["s-intro", "s-quest", "s-quest-fine", "s-story", "s-prova", "s-pausa", "s-end"]) $(s).hidden = s !== screen;
+    adattaSchermo();
     window.scrollTo({ top: 0 });
   }
+
+  // ---------- tutto nello schermo, in verticale ----------
+  // Sulle schermate di voto (prova, frasi, stato d'animo) frase e tre righe di figure devono stare
+  // nell'altezza dello schermo senza scorrere. Si parte dalle dimensioni normali e, finché la pagina
+  // è più alta dello schermo, si rimpiccioliscono le figure (fino a 26 px) e poi il testo della frase.
+  // Si ricalcola a ogni nuova schermata e quando cambia la finestra (es. telefono girato).
+  function adattaSchermo() {
+    const voto = !$("s-story").hidden;
+    document.body.classList.toggle("voto", voto);
+    const root = document.documentElement.style;
+    let w = 72, fs = 1.15;
+    const imposta = () => {
+      root.setProperty("--sam-w", w + "px");
+      root.setProperty("--sam-dom-w", Math.round(w * 1.11) + "px");   // la dominanza ha il riquadro incluso
+      root.setProperty("--fs-frase", fs.toFixed(2) + "rem");
+    };
+    imposta();
+    if (!voto) return;
+    const sta = () => document.documentElement.scrollHeight <= window.innerHeight + 1;
+    while (!sta() && w > 26) { w -= 2; imposta(); }
+    while (!sta() && fs > 0.8) { fs -= 0.05; imposta(); }
+  }
+  let attesaResize = 0;
+  window.addEventListener("resize", () => { clearTimeout(attesaResize); attesaResize = setTimeout(adattaSchermo, 150); });
+
 
   // frasi totali della sessione, per una barra di avanzamento onesta
   let totFrasi = 0, fatte = 0;
@@ -2915,7 +3002,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   const T_APERTURA = new Date().toISOString();        // istante in cui la pagina è stata aperta
   function inizioPagina(nome, inizio) {
     const p = sessione.pagine || (sessione.pagine = {});
-    if (!p[nome]) p[nome] = { inizio: inizio || new Date().toISOString(), nascosta: document.hidden ? 1 : 0 };
+    if (!p[nome]) p[nome] = { inizio: inizio || new Date().toISOString(), nascosta: inPausaSchermo() ? 1 : 0 };
     if (fase_ !== "intro") salvaStato();               // così la ripresa non fa ripartire il tempo
   }
   function finePagina(nome) {
@@ -2930,9 +3017,11 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     salvaStato();
     inviaCoda();
   }
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden && sessione.pagine) Object.values(sessione.pagine).forEach(p => { p.nascosta = 1; });
-  });
+  const segnaPagineNascoste = () => {
+    if (inPausaSchermo() && sessione.pagine) Object.values(sessione.pagine).forEach(p => { p.nascosta = 1; });
+  };
+  document.addEventListener("visibilitychange", segnaPagineNascoste);
+  ORIZZONTALE.addEventListener("change", segnaPagineNascoste);
 
   function fineQuestionari() {
     show("s-quest-fine");
@@ -2983,13 +3072,14 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     inizioPagina("riscontro_prova");
   }
   $("b-start").addEventListener("click", () => {
+    bloccaVerticale();                                 // Android: schermo intero e verticale bloccato
     if (POOL.length === 0) { $("pool-info").textContent = "Nessuna storia caricata nel dataset."; return; }
     avviaQuestionari();
     sessione.apertura = T_APERTURA;                    // inizio del tempo totale sulla web app
     inizioPagina("intro", T_APERTURA);
     finePagina("intro");
   });
-  $("b-inizia").addEventListener("click", () => { finePagina("spiegazione"); avviaProva(); });
+  $("b-inizia").addEventListener("click", () => { bloccaVerticale(); finePagina("spiegazione"); avviaProva(); });
   $("b-prova-rifai").addEventListener("click", () => { finePagina("riscontro_prova"); avviaProva(); });
 
   // inizio dello studio vero, dopo la prova
@@ -3257,7 +3347,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
         ? "Eri alla storia " + (stato0.idx + 1) + " di " + n + ", frase " + (stato0.fidx + 1) + "."
         : "Hai completato " + stato0.idx + " storie su " + n + ".";
       $("riprendi").hidden = false; $("riga-inizia").hidden = true;
-      $("b-riprendi").addEventListener("click", () => { $("riprendi").hidden = true; riprendi(stato0); });
+      $("b-riprendi").addEventListener("click", () => { bloccaVerticale(); $("riprendi").hidden = true; riprendi(stato0); });
     }
   }
 })();

@@ -44,7 +44,12 @@ L'elenco delle 90 storie e il motivo della selezione sono in `selezione_90_stori
 
 Scale: **valenza da −2 a +2** (0 = neutro), arousal e dominanza da 1 a 5.
 Accanto a ogni scala c'è un pulsante **(i)** che riassume il criterio di valutazione.
-Durante storie, prova e stato d'animo non c'è barra di avanzamento: l'avanzamento (storie completate /
+Telefono sempre in verticale: su Android (Chrome), al tocco di "Compila i questionari" / "Inizia" /
+"Riprendi" la pagina passa a schermo intero e blocca l'orientamento verticale; su tutti i telefoni,
+se il telefono è in orizzontale la pagina è coperta da un avviso "tieni il telefono in verticale".
+In quei momenti il cronometro dei voti è fermo e la risposta ha `pagina_nascosta` = 1.
+Sulle schermate di voto frase e tre righe di figure stanno sempre nell'altezza dello schermo:
+le figure (e se serve il testo) si rimpiccioliscono da sole. Durante storie, prova e stato d'animo non c'è barra di avanzamento: l'avanzamento (storie completate /
 storie totali) compare solo nella schermata della pausa.
 
 Parametri modificabili in cima allo script di `index.html`: `PER_GRUPPO`, `PAUSA_S`,
