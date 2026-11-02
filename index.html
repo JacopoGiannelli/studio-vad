@@ -2317,7 +2317,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     <header class="block" style="display:grid;gap:10px">
       <p class="eyebrow">Studio sulle emozioni · Università di Pisa</p>
       <h1>Come ti fa sentire questa storia?</h1>
-      <p class="lead">Leggerai <span class="n-storie">12</span> storie scelte a caso. Le storie sono brevi, di poche frasi ciascuna, e compaiono una frase alla volta. Prima di iniziare ti sarà chiesto di compilare alcuni <b>questionari anonimi</b>.</p>
+      <p class="lead">Leggerai <span class="n-storie">6</span> storie scelte a caso. Le storie sono brevi, di poche frasi ciascuna, e compaiono una frase alla volta. Prima di iniziare ti sarà chiesto di compilare alcuni <b>questionari anonimi</b>.</p>
       <div class="istruzioni">
         <p>Dopo <b>ogni frase</b> ti chiederemo di descrivere, con tre voti, <b>come ti senti tu in questo momento</b>, subito dopo averla letta: cioè l'emozione che quella frase ha suscitato <b>in te</b>.</p>
         <p><b>Non devi dare un voto alla frase</b> (se è triste o allegra, se descrive una situazione tranquilla o pericolosa…): fermati un attimo, ascolta il tuo stato d'animo e descrivi quello. Se la frase non ti ha fatto nessun effetto, va benissimo dirlo.</p>
@@ -2357,7 +2357,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
         <li>Ogni storia è breve e viene mostrata <b>una frase alla volta</b>. Sullo schermo compare solo la frase da leggere: leggila con attenzione.</li>
         <li>Subito dopo compaiono le tre scale, <b>una alla volta</b>: prima <b>valenza</b>, poi <b>arousal</b>, poi <b>dominanza</b>. Per ognuna tocca la figura che descrive meglio <b>come ti senti tu adesso</b>, dopo aver letto la frase: non come si sentono i personaggi e non quanto è emozionante la frase in sé.</li>
         <li>La scelta è <b>definitiva</b>: appena tocchi una figura si passa alla domanda successiva e <b>non si può tornare indietro</b>, quindi prenditi il tempo che ti serve prima di toccare. Dopo la dominanza si passa automaticamente alla frase successiva. Accanto a ogni domanda c'è il pulsante <b>i</b>: passaci sopra o toccalo per rileggere cosa significa.</li>
-        <li>Finita una storia c'è una <b>pausa di 20 secondi</b>, con un timer sullo schermo: rilassati e lascia andare la storia appena letta. Alla fine della pausa ti chiederemo di nuovo come ti senti, e poi inizia la storia successiva, fino a completare tutte e <span class="n-storie">12</span>.</li>
+        <li>Finita una storia c'è una <b>pausa di 20 secondi</b>, con un timer sullo schermo: rilassati e lascia andare la storia appena letta. Alla fine della pausa ti chiederemo di nuovo come ti senti, e poi inizia la storia successiva, fino a completare tutte e <span class="n-storie">6</span>.</li>
         <li>Ogni risposta viene salvata <b>subito dopo averla data</b>. Se chiudi la pagina per sbaglio, riaprila dallo <b>stesso dispositivo e browser</b>: ripartirai dal punto in cui eri rimasto.</li>
       </ol>
       <p class="note">Non ci sono risposte giuste o sbagliate: conta quello che provi. Una volta toccata una figura non si può tornare indietro. Oltre ai voti registriamo, in forma anonima, i tempi di risposta.</p>
@@ -2409,7 +2409,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   <!-- 2. STORIA + VALUTAZIONE -->
   <div id="s-story" class="wrap" style="padding:0" hidden>
     <div class="progress">
-      <div class="meta"><span id="p-label">Storia 1 di 12 · frase 1 di 1</span><span id="p-pct">0%</span></div>
+      <div class="meta"><span id="p-label">Storia 1 di 6 · frase 1 di 1</span><span id="p-pct">0%</span></div>
       <div class="bar"><i id="p-bar"></i></div>
     </div>
     <article class="story" id="story-text" aria-live="polite"></article>
@@ -2456,7 +2456,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   <!-- 2b. PAUSA TRA UNA STORIA E L'ALTRA (protocollo A) -->
   <div id="s-pausa" class="wrap" style="padding:0" hidden>
     <div class="pausa">
-      <p class="eyebrow" id="pausa-label">Storia 1 di 12 completata</p>
+      <p class="eyebrow" id="pausa-label">Storia 1 di 6 completata</p>
       <h2>Pausa</h2>
       <div class="timer" role="timer" aria-live="off">
         <svg viewBox="0 0 120 120" aria-hidden="true">
@@ -2469,24 +2469,15 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     </div>
   </div>
 
-  <!-- 3. FINE -->
+  <!-- 3. FINE: solo il ringraziamento (l'invio delle risposte rimaste avviene in silenzio) -->
   <div id="s-end" class="wrap" style="padding:0" hidden>
     <header style="display:grid;gap:10px">
       <p class="eyebrow">Completato</p>
       <h1>Grazie per la partecipazione</h1>
-      <p class="lead">Hai completato tutte le storie. Le tue risposte sono anonime.</p>
+      <p class="lead">Hai completato lo studio. Grazie per il tempo che ci hai dedicato: le tue risposte sono anonime.</p>
     </header>
-    <p class="status" id="save-status" data-s="">Salvataggio in corso…</p>
-    <div class="row"><button class="btn" id="b-retry" type="button" hidden>Riprova a inviare</button></div>
-    <section class="block" id="fallback">
-      <p class="note">Se l'invio non funziona, scarica il file o copia il testo qui sotto e invialo al ricercatore.</p>
-      <div class="row">
-        <button class="btn ghost" id="b-dl" type="button">Scarica risposte (CSV)</button>
-        <button class="btn ghost" id="b-copy" type="button">Copia risposte</button>
-        <span class="note" id="copy-msg"></span>
-      </div>
-      <textarea class="dump" id="dump" readonly aria-label="Risposte in formato CSV"></textarea>
-    </section>
+    <!-- compare solo se, dopo alcuni tentativi, qualche risposta non è ancora arrivata al foglio -->
+    <p class="note" id="invio-avviso" hidden>Alcune risposte non sono ancora state inviate: controlla la connessione e lascia aperta questa pagina ancora qualche istante.</p>
   </div>
 </main>
 
@@ -2500,7 +2491,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzqiBDBKtLjFGcFOt6ziTS0-2lOLyt6o1MNK1QCL994n1T2_BZ6GAQxBT323VUUes11/exec";
   // ============================================================
   const VERSIONE = "testi";   // "testi" = solo testo, "immagini" = testo + immagine per frase
-  const PER_GRUPPO = 2;          // storie estratte da ogni gruppo IDEST (6 gruppi → 12 storie)
+  const PER_GRUPPO = 1;          // storie estratte da ogni gruppo IDEST (6 gruppi → 6 storie)
   const N_STORIE = 10;           // usato solo se le storie non hanno il campo "gruppo"
   const PAUSA_S = 20;            // protocollo A: secondi di pausa dopo ogni storia
   const DIMENSIONI = ["valenza", "arousal", "dominanza"];   // le tre scale SAM chieste dopo ogni frase
@@ -3054,19 +3045,6 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     inviaCoda();
   }
 
-  // ---------- CSV ----------
-  const HEADER = ["tipo", "sessione", "inizio", "fine", "ordine_storia", "id_storia", "gruppo", "tipo_storia", "n_frase", "frase",
-                  "valenza", "arousal", "dominanza", "momento", "id_storia_precedente", "pausa_s", "versione", "immagine"].concat(COLONNE_MISURE);
-  const q = x => { const s = String(x ?? ""); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  function righeSessione(ses) {
-    const frasi = ses.risposte.map(r => ["frase", ses.id, ses.inizio, ses.fine, r.ordine, r.id_storia, r.gruppo, r.tipo_storia, r.n_frase, r.frase,
-      r.valenza, r.arousal, r.dominanza, "", "", "", VERSIONE, r.immagine || ""].concat(COLONNE_MISURE.map(k => r[k] ?? "")));
-    const umore = (ses.umore || []).map(u => ["umore", ses.id, ses.inizio, ses.fine, u.ordine_storia, u.id_storia_successiva, "", "", "", "",
-      u.valenza, u.arousal, "", u.momento, u.id_storia_precedente, u.pausa_s, VERSIONE, ""].concat(COLONNE_MISURE.map(k => u[k] ?? "")));
-    return frasi.concat(umore);
-  }
-  function toCSV(rows) { return [HEADER, ...rows].map(r => r.map(q).join(",")).join("\n"); }
-
   // ---------- invio al Google Sheet (Apps Script) ----------
   // Ogni risposta diventa un "lotto": il voto di una frase, oppure uno stato d'animo.
   // Il lotto viene messo in coda e inviato subito. Se l'invio non riesce (rete assente, pagina
@@ -3148,31 +3126,33 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     return inInvio;
   }
 
+  // A fine sessione si controlla che TUTTE le risposte siano arrivate al foglio (coda vuota).
+  // Non si mostra nessuno stato al partecipante: se qualcosa manca si riprova da soli ogni
+  // 10 secondi finché la pagina è aperta; dopo 3 tentativi falliti compare un breve avviso.
+  // Lo stato resta salvato nel browser finché la coda non è vuota: riaprendo la pagina,
+  // le risposte rimaste partono da sole.
+  let tentativiFine = 0, timerFine = 0;
   async function tentaSalvataggio() {
-    const st = $("save-status");
-    st.dataset.s = ""; st.textContent = "Salvataggio in corso…";
-    $("b-retry").hidden = true;
-    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("script.google.com") === -1) {
-      st.dataset.s = "warn"; st.textContent = "Salvataggio automatico non configurato. Usa una delle opzioni qui sotto.";
-      return;
-    }
+    clearTimeout(timerFine);
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("script.google.com") === -1) return;
     const ok = await inviaCoda();
     if (ok) {
-      st.dataset.s = "ok"; st.textContent = "Risposte salvate. Puoi chiudere la pagina.";
-      $("fallback").hidden = true;
+      $("invio-avviso").hidden = true;
+      segnalaDebug("tutte le risposte sono state inviate", true);
       cancellaStato();                               // sessione chiusa: niente da riprendere
     } else {
-      st.dataset.s = "warn";
-      st.textContent = "Non è stato possibile inviare tutte le risposte (controlla la connessione). Riprova, oppure usa una delle opzioni qui sotto.";
-      $("b-retry").hidden = false;
+      tentativiFine++;
+      if (tentativiFine >= 3) $("invio-avviso").hidden = false;
+      timerFine = setTimeout(tentaSalvataggio, 10000);
     }
   }
+  // appena torna la connessione si riprova subito
+  window.addEventListener("online", () => { if (fase_ === "fine") tentaSalvataggio(); });
 
   async function concludi() {
     sessione.fine = new Date().toISOString();
     $("p-bar").style.width = "100%";
     fase_ = "fine"; salvaStato();
-    $("dump").value = toCSV(righeSessione(sessione));
     show("s-end");
     tentaSalvataggio();
   }
@@ -3206,7 +3186,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     const n = sessione.storie.length;
     if (st.fase === "questionari") { if (statoQ().qidx < QUEST.length) mostraQuestionario(); else fineQuestionari(); }
     else if (st.fase === "dopo_questionari") fineQuestionari();
-    else if (st.fase === "fine") { $("dump").value = toCSV(righeSessione(sessione)); show("s-end"); tentaSalvataggio(); }
+    else if (st.fase === "fine") { show("s-end"); tentaSalvataggio(); }
     else if (st.fase === "pausa") avviaPausa();      // la pausa riparte da capo (20 s)
     else if (st.fase === "frase" && idx < n) { show("s-story"); renderFrase(); }
     else iniziaUmore();                              // stato d'animo da dare (inizio, dopo pausa o fine)
@@ -3228,25 +3208,6 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       $("b-riprendi").addEventListener("click", () => { $("riprendi").hidden = true; riprendi(stato0); });
     }
   }
-  $("b-retry").addEventListener("click", tentaSalvataggio);
-
-  $("b-copy").addEventListener("click", () => {
-    const t = $("dump");
-    const done = m => { $("copy-msg").textContent = m; };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(t.value).then(() => done("Copiato."), () => { t.select(); done("Seleziona e copia il testo manualmente."); });
-    } else { t.select(); done("Seleziona e copia il testo manualmente."); }
-  });
-
-  // download del CSV di riserva: su un sito normale basta un link con un Blob
-  function scarica(filename, data) {
-    const url = URL.createObjectURL(new Blob([data], { type: "text/csv;charset=utf-8" }));
-    const a = document.createElement("a");
-    a.href = url; a.download = filename;
-    document.body.append(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-  $("b-dl").addEventListener("click", () => scarica("risposte_" + sessione.id + ".csv", $("dump").value));
 })();
 </script>
 

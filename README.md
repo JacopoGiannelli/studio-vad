@@ -20,7 +20,8 @@ Online su GitHub Pages: https://jacopogiannelli.github.io/studio-vad/
 | 5 | Icarus | 5 |
 | 6 | Oedipus + Cinderella + nessun arco chiaro | 6, 7, 8 |
 
-Ogni partecipante vota **12 storie: 2 estratte a caso da ogni gruppo**, in ordine mescolato.
+Ogni partecipante vota **6 storie: 1 estratta a caso da ogni gruppo**, in ordine mescolato
+(`PER_GRUPPO = 1` in `index.html`; con 2 si torna a 12 storie).
 L'elenco delle 90 storie e il motivo della selezione sono in `selezione_90_storie.csv`.
 
 ## Protocollo
@@ -29,7 +30,7 @@ L'elenco delle 90 storie e il motivo della selezione sono in `selezione_90_stori
    pulsante "Compila i questionari"; finiti tutti, pulsante "Inizia".
 1. Frase di prova (non salvata) con riscontro sulle risposte date, ripetibile.
 2. Stato d'animo iniziale (valenza, arousal).
-3. 12 storie; ogni frase compare da sola e si valuta con tre scale SAM (valenza, arousal,
+3. 6 storie; ogni frase compare da sola e si valuta con tre scale SAM (valenza, arousal,
    dominanza), una alla volta. Si descrive **come ci si sente dopo aver letto la frase**,
    non si dà un voto alla frase.
 4. Il primo tocco su una figura è **definitivo**: non si può tornare indietro.
