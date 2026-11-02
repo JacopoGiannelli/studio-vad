@@ -1,7 +1,8 @@
 /**
  * Apps Script che riceve le risposte della web app VAD e le scrive nel Google Sheet.
- * Versione del codice: v5 (90 storie in 6 gruppi, scale VAD, valenza da −2 a +2, niente "Indietro",
- * tempi per parametro, tempo totale per storia, questionari PANAS / STAI / BSI-18).
+ * Versione del codice: v7 (90 storie in 6 gruppi, scale VAD mostrate insieme, valenza da −2 a +2,
+ * niente "Indietro", tempi per voto e ordine dei voti, dominanza anche nello stato d'animo,
+ * tempo totale per storia, questionari PANAS / STAI / BSI-18, tempo sulle pagine e tempo totale) – v7.
  *
  * Le risposte arrivano a "lotti": la web app invia una richiesta POST (JSON) subito dopo
  * ogni risposta, cioè dopo i tre voti di ogni frase, dopo ogni stato d'animo e (quando la web app
@@ -9,25 +10,31 @@
  *  - righe nel foglio "risposte": una riga per ogni frase valutata
  *    (valenza da −2 a +2, arousal e dominanza da 1 a 5);
  *  - righe nel foglio "umore": una riga per ogni rilevazione dello stato d'animo
- *    (protocollo A: all'inizio, dopo la pausa che segue ogni storia, alla fine; valenza e arousal);
+ *    (protocollo A: all'inizio, dopo la pausa che segue ogni storia, alla fine;
+ *    valenza, arousal e dominanza, come per le frasi);
  *  - righe nel foglio "questionari": una riga per ogni questionario compilato, con l'istante di
  *    inizio, l'istante di fine e la durata della compilazione;
  *  - i VOTI dei questionari in un foglio per questionario ("voti_PANAS", "voti_STAI-Y1",
  *    "voti_BSI-18", …): una riga per partecipante e una colonna per item ("item_1", "item_2", …),
  *    comodo per calcolare i punteggi. Le colonne degli item si creano da sole al primo invio;
+ *  - righe nel foglio "tempi_pagine": tempo passato sulle pagine "di passaggio" (intro, spiegazione,
+ *    prova, riscontro_prova) e, a fine sessione, la riga "totale_web_app" = tempo totale dall'apertura
+ *    del sito all'ultima risposta, pause comprese (inizio, fine, durata_ms, tentativo, pagina_nascosta);
  *  - il foglio "tempi_storie" viene AGGIORNATO (non solo riempito): una riga per ogni storia di
  *    ogni partecipante, con la somma dei tempi di voto (vedi sotto).
  *
  * Per ogni frase e ogni stato d'animo arrivano anche le misure di risposta:
- *  - rt_valenza_ms, rt_arousal_ms, rt_dominanza_ms: tempo di risposta su ciascuna scala,
- *    contato solo mentre quella scala era sullo schermo (il voto è definitivo al primo tocco).
- *    Nel foglio "umore" ci sono solo rt_valenza_ms e rt_arousal_ms (lo stato d'animo non chiede la dominanza);
+ *  - rt_valenza_ms, rt_arousal_ms, rt_dominanza_ms: tempo di ciascun voto. Le tre scale sono
+ *    sullo schermo insieme: il tempo di un voto va dal voto precedente (o dalla comparsa della
+ *    schermata, per il primo) al tocco della figura; la somma dei tre è il tempo della schermata.
+ *    Il voto è definitivo al primo tocco;
+ *  - ordine_voti: ordine in cui sono state scelte le scale (es. "V-A-D");
  *  - n_info: quante volte è stato aperto il pulsante (i);
  *  - pagina_nascosta: 1 se durante la risposta la persona è passata ad altra scheda o app.
  * La colonna "ricevuto" è il timestamp di arrivo nel foglio.
  *
  * TEMPO PER STORIA (foglio "tempi_storie"), calcolato qui, senza modifiche alla web app:
- *  - tempo_umore_prima_ms = rt_valenza_ms + rt_arousal_ms della domanda "come ti senti" mostrata
+ *  - tempo_umore_prima_ms = rt_valenza_ms + rt_arousal_ms + rt_dominanza_ms della domanda "come ti senti" mostrata
  *    PRIMA di quella storia (all'inizio per la storia 1, dopo la pausa per le altre);
  *  - tempo_frasi_ms = somma di rt_valenza_ms + rt_arousal_ms + rt_dominanza_ms di tutte le frasi
  *    della storia;
@@ -58,34 +65,33 @@
  * Versione: Nuova versione → Distribuisci (l'URL /exec resta lo stesso).
  */
 
-const VERSIONE_CODICE = "v5";
+const VERSIONE_CODICE = "v7";
 
 // ID del Google Sheet "Risposte studio VAD" (la parte dell'indirizzo tra /d/ e /edit).
 // Serve se lo script NON è stato creato da Estensioni → Apps Script dentro il foglio:
 // in quel caso getActiveSpreadsheet() non trova niente e si apre il foglio con questo ID.
 const ID_FOGLIO = "1U8CVtfzR4GjcmlcbJHwFXN7Y4bg2x3LxaGHLHW4wMUE";
 
-// Misure di risposta (stessi nomi usati dalla web app)
+// Misure di risposta (stessi nomi usati dalla web app): numeri, più l'ordine dei voti (testo)
 const COLONNE_MISURE = ["rt_valenza_ms", "rt_arousal_ms", "rt_dominanza_ms", "n_info", "pagina_nascosta"];
-// nello stato d'animo la dominanza non si chiede: niente rt_dominanza_ms
-const COLONNE_MISURE_UMORE = ["rt_valenza_ms", "rt_arousal_ms", "n_info", "pagina_nascosta"];
+const COLONNA_ORDINE = "ordine_voti";
 
 const NOME_FOGLIO = "risposte";
 const INTESTAZIONE = [
   "ricevuto", "sessione", "inizio", "fine", "ordine_storia", "id_storia", "gruppo", "tipo_storia",
   "n_frase", "frase", "valenza", "arousal", "dominanza"
-].concat(COLONNE_MISURE, ["user_agent", "versione", "immagine"]);
+].concat(COLONNE_MISURE, [COLONNA_ORDINE, "user_agent", "versione", "immagine"]);
 
 // Registro dei lotti già scritti (serve a scartare gli invii doppi)
 const NOME_FOGLIO_LOTTI = "lotti";
 const INTESTAZIONE_LOTTI = ["ricevuto", "lotto", "sessione", "righe", "righe_umore"];
 
-// Protocollo A: stato d'animo prima di ogni storia e alla fine (solo valenza e arousal)
+// Protocollo A: stato d'animo prima di ogni storia e alla fine (valenza, arousal, dominanza)
 const NOME_FOGLIO_UMORE = "umore";
 const INTESTAZIONE_UMORE = [
   "ricevuto", "sessione", "momento", "ordine_storia", "id_storia_precedente",
-  "id_storia_successiva", "pausa_s", "valenza", "arousal"
-].concat(COLONNE_MISURE_UMORE, ["user_agent", "versione"]);
+  "id_storia_successiva", "pausa_s", "valenza", "arousal", "dominanza"
+].concat(COLONNE_MISURE, [COLONNA_ORDINE, "user_agent", "versione"]);
 
 // Tempo totale per storia: una riga per (sessione, storia), aggiornata a ogni frase.
 // "chiave" = sessione|ordine_storia, serve allo script per ritrovare la riga da aggiornare.
@@ -104,6 +110,12 @@ const INTESTAZIONE_QUEST = [
 ];
 // Voti dei questionari: un foglio per questionario, "voti_" + nome (es. "voti_PANAS")
 const PREFISSO_VOTI = "voti_";
+
+// Tempo passato sulle pagine (e tempo totale sulla web app): una riga per pagina visitata
+const NOME_FOGLIO_PAGINE = "tempi_pagine";
+const INTESTAZIONE_PAGINE = [
+  "ricevuto", "sessione", "pagina", "tentativo", "inizio", "fine", "durata_ms", "pagina_nascosta", "user_agent", "versione"
+];
 
 // Il Google Sheet: quello a cui è collegato lo script, altrimenti quello con ID_FOGLIO.
 function ss_() {
@@ -150,6 +162,8 @@ function voto_(v, min, max) {
 }
 const valenza_ = function (v) { return voto_(v, -2, 2); };   // −2 … +2 (0 = neutro)
 const scala5_ = function (v) { return voto_(v, 1, 5); };     // 1 … 5 (arousal, dominanza)
+// dominanza dello stato d'animo: le risposte inviate con versioni precedenti della web app non la hanno
+const scala5Facoltativa_ = function (v) { return (v === undefined || v === null || v === "") ? "" : scala5_(v); };
 
 // Numero (anche 0) oppure cella vuota: per le misure, dove 0 è un valore valido
 // (es. pagina_nascosta = 0), a differenza di Number(x) || "" che trasformerebbe 0 in vuoto.
@@ -263,10 +277,12 @@ function doPost(e) {
     const risposte = Array.isArray(d.risposte) ? d.risposte : [];
     const umore = Array.isArray(d.umore) ? d.umore : [];
     const questionari = Array.isArray(d.questionari) ? d.questionari : [];
+    const pagine = Array.isArray(d.pagine) ? d.pagine : [];
     if (risposte.length > 500) throw new Error("formato non valido");
     if (umore.length > 50) throw new Error("formato non valido (umore)");
     if (questionari.length > 10) throw new Error("formato non valido (questionari)");
-    if (risposte.length === 0 && umore.length === 0 && questionari.length === 0) throw new Error("lotto vuoto");
+    if (pagine.length > 20) throw new Error("formato non valido (pagine)");
+    if (risposte.length === 0 && umore.length === 0 && questionari.length === 0 && pagine.length === 0) throw new Error("lotto vuoto");
 
     // lotto già ricevuto? allora è un doppio invio: si conferma senza riscrivere
     const lotto = testo_(d.lotto, 100);
@@ -295,6 +311,7 @@ function doPost(e) {
         scala5_(r.arousal),
         scala5_(r.dominanza)
       ].concat(misure_(r), [
+        testo_(r[COLONNA_ORDINE], 20),
         testo_(d.user_agent, 300),
         testo_(d.versione || "testi", 20),
         testo_(r.immagine, 200)
@@ -310,8 +327,10 @@ function doPost(e) {
         testo_(u.id_storia_successiva, 100),
         Number(u.pausa_s) || 0,
         valenza_(u.valenza),
-        scala5_(u.arousal)
-      ].concat(misure_(u, COLONNE_MISURE_UMORE), [
+        scala5_(u.arousal),
+        scala5Facoltativa_(u.dominanza)
+      ].concat(misure_(u), [
+        testo_(u[COLONNA_ORDINE], 20),
         testo_(d.user_agent, 300),
         testo_(d.versione || "testi", 20)
       ]);
@@ -326,7 +345,15 @@ function doPost(e) {
       votiQuest.push({ nome: nome, item: item });
     });
 
+    // tempi delle pagine (durata: quella misurata dalla web app, altrimenti fine − inizio)
+    const righePagine = pagine.map(function (p) {
+      return [ora, sessione, testo_(p && p.pagina, 40), numero_(p && p.tentativo), testo_(p && p.inizio, 40),
+              testo_(p && p.fine, 40), durataQuestionario_(p || {}), numero_(p && p.pagina_nascosta),
+              testo_(d.user_agent, 300), testo_(d.versione || "testi", 20)];
+    });
+
     if (righe.length) scrivi_(foglio_(NOME_FOGLIO, INTESTAZIONE), righe, INTESTAZIONE.length);
+    if (righePagine.length) scrivi_(foglio_(NOME_FOGLIO_PAGINE, INTESTAZIONE_PAGINE), righePagine, INTESTAZIONE_PAGINE.length);
     if (righeUmore.length) scrivi_(foglio_(NOME_FOGLIO_UMORE, INTESTAZIONE_UMORE), righeUmore, INTESTAZIONE_UMORE.length);
     if (righeQuest.length) {
       scrivi_(foglio_(NOME_FOGLIO_QUEST, INTESTAZIONE_QUEST), righeQuest, INTESTAZIONE_QUEST.length);
@@ -341,7 +368,7 @@ function doPost(e) {
         if (!ordine || u.momento === "fine") return;          // lo stato d'animo finale non è di nessuna storia
         aggiornaTempoStoria_(shTempi, ora, sessione, ordine, {
           id_storia: testo_(u.id_storia_successiva, 100),
-          umore_ms: zero_(u.rt_valenza_ms) + zero_(u.rt_arousal_ms)
+          umore_ms: zero_(u.rt_valenza_ms) + zero_(u.rt_arousal_ms) + zero_(u.rt_dominanza_ms)
         });
       });
       risposte.forEach(function (r) {
@@ -357,7 +384,7 @@ function doPost(e) {
 
     if (lotto) shLotti.appendRow([ora, lotto, sessione, righe.length, righeUmore.length]);
     return json_({ ok: true, righe: righe.length, righe_umore: righeUmore.length,
-                   questionari: righeQuest.length, codice: VERSIONE_CODICE });
+                   questionari: righeQuest.length, pagine: righePagine.length, codice: VERSIONE_CODICE });
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message || err), codice: VERSIONE_CODICE });
   } finally {
@@ -374,7 +401,7 @@ function doGet() {
     foglio = ss.getName();
     const voti = ss.getSheets().map(function (sh) { return sh.getName(); })
                    .filter(function (n) { return n.indexOf(PREFISSO_VOTI) === 0; });
-    [NOME_FOGLIO, NOME_FOGLIO_UMORE, NOME_FOGLIO_TEMPI, NOME_FOGLIO_QUEST].concat(voti, [NOME_FOGLIO_LOTTI])
+    [NOME_FOGLIO, NOME_FOGLIO_UMORE, NOME_FOGLIO_TEMPI, NOME_FOGLIO_PAGINE, NOME_FOGLIO_QUEST].concat(voti, [NOME_FOGLIO_LOTTI])
       .forEach(function (n) {
         const sh = ss.getSheetByName(n);
         righe[n] = sh ? Math.max(sh.getLastRow() - 1, 0) : "non ancora creato";
@@ -384,8 +411,8 @@ function doGet() {
   }
   return json_({
     ok: true,
-    messaggio: "Web app VAD attiva (codice " + VERSIONE_CODICE + ": 90 storie, VAD, valenza da -2 a +2, tempi per parametro, " +
-               "tempi per storia, questionari). Le risposte arrivano via POST.",
+    messaggio: "Web app VAD attiva (codice " + VERSIONE_CODICE + ": 90 storie, VAD, valenza da -2 a +2, tre scale insieme, " +
+               "dominanza nell'umore, tempi per storia, questionari, tempi delle pagine). Le risposte arrivano via POST.",
     foglio: foglio,
     righe: righe
   });

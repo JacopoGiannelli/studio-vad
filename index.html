@@ -2317,51 +2317,9 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     <header class="block" style="display:grid;gap:10px">
       <p class="eyebrow">Studio sulle emozioni · Università di Pisa</p>
       <h1>Come ti fa sentire questa storia?</h1>
-      <p class="lead">Leggerai <span class="n-storie">6</span> storie scelte a caso. Le storie sono brevi, di poche frasi ciascuna, e compaiono una frase alla volta. Prima di iniziare ti sarà chiesto di compilare alcuni <b>questionari anonimi</b>.</p>
-      <div class="istruzioni">
-        <p>Dopo <b>ogni frase</b> ti chiederemo di descrivere, con tre voti, <b>come ti senti tu in questo momento</b>, subito dopo averla letta: cioè l'emozione che quella frase ha suscitato <b>in te</b>.</p>
-        <p><b>Non devi dare un voto alla frase</b> (se è triste o allegra, se descrive una situazione tranquilla o pericolosa…): fermati un attimo, ascolta il tuo stato d'animo e descrivi quello. Se la frase non ti ha fatto nessun effetto, va benissimo dirlo.</p>
-      </div>
+      <p class="lead">Grazie per aver accettato di partecipare. Lo studio riguarda le emozioni che proviamo leggendo brevi storie.</p>
+      <p class="lead">Per prima cosa ti chiederemo di compilare tre brevi <b>questionari anonimi</b>, uno per pagina. Subito dopo ti spiegheremo come funziona lo studio.</p>
     </header>
-
-    <section class="block" aria-labelledby="h-def">
-      <h2 id="h-def">Le tre dimensioni</h2>
-      <div class="dims">
-        <div class="dim" data-d="v"><div>
-          <h3>Valenza <span>· piacevole o spiacevole</span></h3>
-          <p>Quanto l'emozione che provi è negativa o positiva: tristezza, paura o fastidio da una parte; gioia, serenità o piacere dall'altra.</p>
-          <div class="sam-preview" data-sam="valenza" aria-hidden="true"></div>
-          <div class="poles"><span>−2 = negativa</span><span>0 = neutra</span><span>+2 = positiva</span></div>
-        </div></div>
-        <div class="dim" data-d="a"><div>
-          <h3>Arousal <span>· attivazione</span></h3>
-          <p>Quanto ti senti attivato o coinvolto: calmo, rilassato o annoiato da una parte; agitato, eccitato o in allerta dall'altra. Non dice se l'emozione è bella o brutta, solo quanto è intensa.</p>
-          <div class="sam-preview" data-sam="arousal" aria-hidden="true"></div>
-          <div class="poles"><span>1 = molto calmo</span><span>5 = molto agitato</span></div>
-        </div></div>
-        <div class="dim" data-d="d"><div>
-          <h3>Dominanza <span>· controllo</span></h3>
-          <p>Quanto ti senti in controllo di ciò che provi: sopraffatto, impotente o in balia della situazione da una parte; padrone della situazione e sicuro dall'altra.</p>
-          <div class="sam-preview" data-sam="dominanza" aria-hidden="true"></div>
-          <div class="poles"><span>1 = nessun controllo</span><span>5 = pieno controllo</span></div>
-        </div></div>
-      </div>
-    </section>
-
-    <section class="block" aria-labelledby="h-cosa">
-      <h2 id="h-cosa">Cosa devi fare</h2>
-      <ol class="steps">
-        <li>Per prima cosa compilerai tre brevi <b>questionari anonimi</b>, uno per pagina. Quando li hai completati, premi <b>Inizia</b>.</li>
-        <li>Per prendere confidenza con le domande, farai prima una <b>frase di prova</b>: la sua risposta non viene salvata.</li>
-        <li>Prima di iniziare ti chiederemo <b>come ti senti in questo momento</b>, con due scale: valenza e arousal.</li>
-        <li>Ogni storia è breve e viene mostrata <b>una frase alla volta</b>. Sullo schermo compare solo la frase da leggere: leggila con attenzione.</li>
-        <li>Subito dopo compaiono le tre scale, <b>una alla volta</b>: prima <b>valenza</b>, poi <b>arousal</b>, poi <b>dominanza</b>. Per ognuna tocca la figura che descrive meglio <b>come ti senti tu adesso</b>, dopo aver letto la frase: non come si sentono i personaggi e non quanto è emozionante la frase in sé.</li>
-        <li>La scelta è <b>definitiva</b>: appena tocchi una figura si passa alla domanda successiva e <b>non si può tornare indietro</b>, quindi prenditi il tempo che ti serve prima di toccare. Dopo la dominanza si passa automaticamente alla frase successiva. Accanto a ogni domanda c'è il pulsante <b>i</b>: passaci sopra o toccalo per rileggere cosa significa.</li>
-        <li>Finita una storia c'è una <b>pausa di 20 secondi</b>, con un timer sullo schermo: rilassati e lascia andare la storia appena letta. Alla fine della pausa ti chiederemo di nuovo come ti senti, e poi inizia la storia successiva, fino a completare tutte e <span class="n-storie">6</span>.</li>
-        <li>Ogni risposta viene salvata <b>subito dopo averla data</b>. Se chiudi la pagina per sbaglio, riaprila dallo <b>stesso dispositivo e browser</b>: ripartirai dal punto in cui eri rimasto.</li>
-      </ol>
-      <p class="note">Non ci sono risposte giuste o sbagliate: conta quello che provi. Una volta toccata una figura non si può tornare indietro. Oltre ai voti registriamo, in forma anonima, i tempi di risposta.</p>
-    </section>
 
     <section class="block riprendi" id="riprendi" hidden>
       <p><b>Hai una sessione in corso.</b> <span id="riprendi-dove"></span></p>
@@ -2396,11 +2354,54 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
 
   <!-- 1b. FINE DEI QUESTIONARI: da qui si inizia lo studio -->
   <div id="s-quest-fine" class="wrap" style="padding:0" hidden>
-    <header style="display:grid;gap:10px">
-      <p class="eyebrow">Questionari completati</p>
-      <h2>Grazie, ora puoi iniziare</h2>
-      <p class="lead">Ora inizia lo studio: prima una frase di prova, poi le storie, una frase alla volta.</p>
+    <header class="block" style="display:grid;gap:10px">
+      <p class="eyebrow">Questionari completati · grazie!</p>
+      <h1>Come funziona lo studio</h1>
+      <p class="lead">Leggerai <span class="n-storie">6</span> storie scelte a caso. Le storie sono brevi, di poche frasi ciascuna, e compaiono una frase alla volta.</p>
+      <div class="istruzioni">
+        <p>Dopo <b>ogni frase</b> ti chiederemo di descrivere, con tre voti, <b>come ti senti tu in questo momento</b>, subito dopo averla letta: cioè l'emozione che quella frase ha suscitato <b>in te</b>.</p>
+        <p><b>Non devi dare un voto alla frase</b> (se è triste o allegra, se descrive una situazione tranquilla o pericolosa…): fermati un attimo, ascolta il tuo stato d'animo e descrivi quello. Se la frase non ti ha fatto nessun effetto, va benissimo dirlo.</p>
+      </div>
     </header>
+
+    <section class="block" aria-labelledby="h-def">
+      <h2 id="h-def">Le tre dimensioni</h2>
+      <div class="dims">
+        <div class="dim" data-d="v"><div>
+          <h3>Valenza <span>· piacevole o spiacevole</span></h3>
+          <p>Quanto l'emozione che provi è negativa o positiva: tristezza, paura o fastidio da una parte; gioia, serenità o piacere dall'altra.</p>
+          <div class="sam-preview" data-sam="valenza" aria-hidden="true"></div>
+          <div class="poles"><span>−2 = negativa</span><span>0 = neutra</span><span>+2 = positiva</span></div>
+        </div></div>
+        <div class="dim" data-d="a"><div>
+          <h3>Arousal <span>· attivazione</span></h3>
+          <p>Quanto ti senti attivato o coinvolto: calmo, rilassato o annoiato da una parte; agitato, eccitato o in allerta dall'altra. Non dice se l'emozione è bella o brutta, solo quanto è intensa.</p>
+          <div class="sam-preview" data-sam="arousal" aria-hidden="true"></div>
+          <div class="poles"><span>1 = molto calmo</span><span>5 = molto agitato</span></div>
+        </div></div>
+        <div class="dim" data-d="d"><div>
+          <h3>Dominanza <span>· controllo</span></h3>
+          <p>Quanto ti senti in controllo di ciò che provi: sopraffatto, impotente o in balia della situazione da una parte; padrone della situazione e sicuro dall'altra.</p>
+          <div class="sam-preview" data-sam="dominanza" aria-hidden="true"></div>
+          <div class="poles"><span>1 = nessun controllo</span><span>5 = pieno controllo</span></div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="h-cosa">
+      <h2 id="h-cosa">Cosa devi fare</h2>
+      <ol class="steps">
+        <li>Per prendere confidenza con le domande, farai prima una <b>frase di prova</b>: la sua risposta non viene salvata.</li>
+        <li>Prima della prima storia ti chiederemo <b>come ti senti in questo momento</b>, con le stesse tre scale: valenza, arousal e dominanza.</li>
+        <li>Ogni storia è breve e viene mostrata <b>una frase alla volta</b>. Sullo schermo compare solo la frase da leggere: leggila con attenzione.</li>
+        <li>Sotto la frase compaiono <b>insieme le tre scale</b>: valenza, arousal e dominanza. Per ognuna tocca la figura che descrive meglio <b>come ti senti tu adesso</b>, dopo aver letto la frase: non come si sentono i personaggi e non quanto è emozionante la frase in sé.</li>
+        <li>La scelta è <b>definitiva</b>: appena tocchi una figura quella scala si blocca e <b>non si può cambiare</b>, quindi prenditi il tempo che ti serve prima di toccare. Quando hai risposto a tutte e tre si passa automaticamente alla frase successiva. Accanto a ogni scala c'è il pulsante <b>i</b>: passaci sopra o toccalo per rileggere cosa significa.</li>
+        <li>Finita una storia c'è una <b>pausa di 20 secondi</b>, con un timer sullo schermo: rilassati e lascia andare la storia appena letta. Alla fine della pausa ti chiederemo di nuovo come ti senti, e poi inizia la storia successiva, fino a completare tutte e <span class="n-storie">6</span>.</li>
+        <li>Ogni risposta viene salvata <b>subito dopo averla data</b>. Se chiudi la pagina per sbaglio, riaprila dallo <b>stesso dispositivo e browser</b>: ripartirai dal punto in cui eri rimasto.</li>
+      </ol>
+      <p class="note">Non ci sono risposte giuste o sbagliate: conta quello che provi. Una volta toccata una figura non si può tornare indietro. Oltre ai voti registriamo, in forma anonima, i tempi di risposta.</p>
+    </section>
+
     <div class="row">
       <button class="btn" id="b-inizia" type="button">Inizia</button>
     </div>
@@ -2416,23 +2417,20 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
 
     <form class="scales" id="f-rate" novalidate>
       <fieldset class="scale" data-d="v">
-        <legend>Valenza <small>Fermati un momento e ascolta come ti senti adesso, dopo aver letto questa frase. Il tuo stato d'animo è più spiacevole o più piacevole?</small></legend>
+        <legend>Valenza</legend>
         <div class="opts" data-name="valenza"></div>
         <div class="poles"><span>−2 · molto negativa</span><span>+2 · molto positiva</span></div>
       </fieldset>
       <fieldset class="scale" data-d="a">
-        <legend>Arousal <small>Ora concentrati sull'intensità di ciò che provi. Ti senti calmo e rilassato, oppure agitato ed eccitato?</small></legend>
+        <legend>Arousal</legend>
         <div class="opts" data-name="arousal"></div>
         <div class="poles"><span>molto calmo</span><span>molto agitato</span></div>
       </fieldset>
       <fieldset class="scale" data-d="d">
-        <legend>Dominanza <small>Infine, pensa a quanto ti senti padrone di ciò che provi adesso. Ti senti sopraffatto e in balia della situazione, oppure in controllo?</small></legend>
+        <legend>Dominanza</legend>
         <div class="opts" data-name="dominanza"></div>
         <div class="poles"><span>nessun controllo</span><span>pieno controllo</span></div>
       </fieldset>
-      <div class="row">
-        <span class="hint" id="hint">Domanda 1 di 3</span>
-      </div>
     </form>
   </div>
 
@@ -2503,7 +2501,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   // frase di prova mostrata prima dello studio: la risposta NON viene salvata
   const FRASE_PROVA = "Mentre torno a casa inizia a piovere forte e mi accorgo di aver dimenticato l'ombrello.";
   // misure registrate per ogni frase e ogni stato d'animo, oltre ai voti (stesse colonne nel foglio)
-  const COLONNE_MISURE = ["rt_valenza_ms", "rt_arousal_ms", "rt_dominanza_ms", "n_info", "pagina_nascosta"];
+  const COLONNE_MISURE = ["rt_valenza_ms", "rt_arousal_ms", "rt_dominanza_ms", "n_info", "pagina_nascosta", "ordine_voti"];
   // con ?debug alla fine dell'indirizzo compare in basso l'esito di ogni invio al foglio
   const DEBUG = /[?&]debug\b/.test(location.search);
 
@@ -2542,7 +2540,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   const N_SESSIONE = GRUPPI ? GRUPPI.length * PER_GRUPPO : Math.min(N_STORIE, POOL.length);
   document.querySelectorAll(".n-storie").forEach(el => { el.textContent = N_SESSIONE; });
   $("pool-info").textContent = POOL.length + " storie nel dataset" +
-    (GRUPPI ? " (" + GRUPPI.length + " gruppi, " + PER_GRUPPO + " storie per gruppo a ogni sessione)" : "");
+    (GRUPPI ? " (" + GRUPPI.length + " gruppi, " + PER_GRUPPO + (PER_GRUPPO === 1 ? " storia" : " storie") + " per gruppo a ogni sessione)" : "");
   // estrazione casuale senza ripetizioni (Fisher–Yates con crypto)
   function randInt(n) {
     const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n;
@@ -2573,7 +2571,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     fine: null,
     storie: [],
     risposte: [],  // {ordine, id_storia, gruppo, tipo_storia, n_frase, frase, valenza, arousal, dominanza, immagine, + COLONNE_MISURE}
-    umore: []      // stato d'animo (protocollo A): {momento, ordine_storia, id_storia_precedente, id_storia_successiva, pausa_s, valenza, arousal, + COLONNE_MISURE}
+    umore: []      // stato d'animo (protocollo A): {momento, ordine_storia, id_storia_precedente, id_storia_successiva, pausa_s, valenza, arousal, dominanza, + COLONNE_MISURE}
   };
   let idx = 0, fidx = 0, tStart = 0;   // idx = storia corrente, fidx = frase corrente
   // coda dei lotti da inviare al foglio: un lotto per ogni risposta (voto di frase o stato d'animo)
@@ -2620,64 +2618,47 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     }
     return out;
   }
-  // ---------- una scala alla volta ----------
-  // step = indice della scala visibile: 0 valenza, 1 arousal, 2 dominanza
+  // ---------- le tre scale insieme ----------
+  // Dopo ogni frase (e per lo stato d'animo) compaiono INSIEME valenza, arousal e dominanza.
+  // Ogni scala si blocca al primo tocco; quando sono state scelte tutte, dopo un attimo si va avanti.
   const SCALE = Array.from(form.querySelectorAll("fieldset.scale"));
-  const RITARDO_MS = 350;      // pausa per far vedere la figura scelta prima di cambiare scala
-  let step = 0, inAvanzamento = false;
-  // fase: "prova", "frase" (le tre scale) oppure "umore" (stato d'animo: solo valenza e arousal)
+  const RITARDO_MS = 350;      // pausa per far vedere le figure scelte prima di cambiare schermata
+  let inAvanzamento = false;
+  // fase: "prova", "frase" oppure "umore" (stato d'animo); in tutti i casi le tre scale
   let fase = "frase", attive = SCALE;
 
-  // testi delle domande: quelli per le frasi sono nell'HTML, quelli per l'umore qui
-  const DOMANDE_FRASE = SCALE.map(f => f.querySelector("legend small").textContent);
-  const DOMANDE_UMORE = [
-    "Pensa a come ti senti in questo momento, in generale. Il tuo stato d'animo è più spiacevole o più piacevole?",
-    "In questo momento ti senti calmo e rilassato, oppure agitato ed eccitato?"
-  ];
-  function impostaDomande(testi) {
-    SCALE.forEach((f, i) => { if (testi[i]) f.querySelector("legend small").textContent = testi[i]; });
-  }
-
   // ---------- misure di risposta ----------
-  // Il primo tocco su una figura è DEFINITIVO: la scala si blocca e non si può tornare indietro.
-  // Per ogni frase (e ogni stato d'animo) si registrano, oltre ai voti (non c'è un tempo totale
-  // della schermata: solo il tempo di ciascun parametro):
-  //  - rt_<dim>_ms: tempo di risposta su quella scala, dalla sua comparsa al tocco della figura.
-  //    È misurato con un cronometro PER SCALA, che corre solo mentre quella scala è sullo schermo
-  //    e si ferma se la pagina viene nascosta (altra scheda o app).
+  // Il primo tocco su una figura è DEFINITIVO: quella scala si blocca e non si può cambiare.
+  // Per ogni frase (e ogni stato d'animo) si registrano, oltre ai voti:
+  //  - rt_<dim>_ms: tempo impiegato per quel voto. Le tre scale sono sullo schermo insieme, quindi
+  //    il tempo di un voto va dal voto PRECEDENTE (o dalla comparsa della schermata, per il primo)
+  //    al tocco di quella figura. Così la somma dei tre tempi è il tempo totale della schermata.
+  //    Il cronometro si ferma se la pagina viene nascosta (altra scheda o app).
+  //  - ordine_voti: in che ordine sono state scelte le scale (es. "V-A-D" = valenza, arousal, dominanza)
   //  - n_info: quante volte è stato aperto il pulsante (i) (possibile segnale di incertezza)
   //  - pagina_nascosta: 1 se durante la risposta la persona è passata a un'altra scheda o app
   //    (in quel caso conviene escludere i tempi dalle analisi)
   let misura = null;
-  let dimCrono = null;   // scala il cui cronometro sta correndo
   function nuovaMisura() {
-    misura = { n_info: 0, nascosta: document.hidden ? 1 : 0, dim: {} };
-    // attivo = ms accumulati mentre la scala era visibile; dal = istante in cui il cronometro è ripartito
-    for (const d of DIMENSIONI) misura.dim[d] = { attivo: 0, dal: null, rt: null };
-    dimCrono = null;
+    // attivo = ms accumulati con la schermata visibile; dal = istante in cui il cronometro è ripartito;
+    // ultimo = tempo del voto precedente (da lì parte il tempo del voto successivo)
+    misura = { n_info: 0, nascosta: document.hidden ? 1 : 0, attivo: 0, dal: document.hidden ? null : performance.now(),
+               ultimo: 0, ordine: [], rt: {} };
   }
-  // cronometro per scala: si accumula il tempo solo mentre la scala è sullo schermo
-  function tempoScala(m) { return m.attivo + (m.dal != null ? performance.now() - m.dal : 0); }
-  function pausaCrono() {
-    const m = misura && dimCrono && misura.dim[dimCrono];
-    if (m && m.dal != null) { m.attivo += performance.now() - m.dal; m.dal = null; }
-  }
-  function avviaCrono(d) {
-    pausaCrono();                                    // ferma quello della scala precedente
-    dimCrono = misura && misura.dim[d] ? d : null;
-    if (dimCrono && !document.hidden) misura.dim[d].dal = performance.now();
-  }
+  function tempoSchermata() { return misura.attivo + (misura.dal != null ? performance.now() - misura.dal : 0); }
+  const SIGLA = { valenza: "V", arousal: "A", dominanza: "D" };
   function campiMisura() {
     const o = {};
-    for (const d of DIMENSIONI) o["rt_" + d + "_ms"] = misura.dim[d].rt == null ? "" : misura.dim[d].rt;
+    for (const d of DIMENSIONI) o["rt_" + d + "_ms"] = misura.rt[d] == null ? "" : misura.rt[d];
     o.n_info = misura.n_info; o.pagina_nascosta = misura.nascosta;
+    o.ordine_voti = misura.ordine.map(d => SIGLA[d]).join("-");
     return o;
   }
   // pagina nascosta (altra scheda o app): si segna e il cronometro si mette in pausa finché non torna visibile
   document.addEventListener("visibilitychange", () => {
     if (!misura) return;
-    if (document.hidden) { misura.nascosta = 1; pausaCrono(); }
-    else if (dimCrono && misura.dim[dimCrono].dal == null) misura.dim[dimCrono].dal = performance.now();
+    if (document.hidden) { misura.nascosta = 1; if (misura.dal != null) { misura.attivo += performance.now() - misura.dal; misura.dal = null; } }
+    else if (misura.dal == null) misura.dal = performance.now();
   });
 
   // ---------- pulsante (i): criterio di valutazione di ogni domanda ----------
@@ -2718,7 +2699,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     const tip = document.createElement("div");
     tip.className = "tip"; tip.id = "tip-" + dim; tip.hidden = true; tip.innerHTML = CRITERI[dim] || "";
     btn.setAttribute("aria-controls", tip.id); btn.setAttribute("aria-expanded", "false");
-    leg.insertBefore(btn, leg.querySelector("small"));
+    leg.append(btn);
     leg.after(tip);
     const x = { btn, tip, fissato: false };
     INFO.push(x);
@@ -2732,32 +2713,36 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   });
   document.addEventListener("keydown", e => { if (e.key === "Escape") chiudiInfo(); });
 
-  function mostraScala() {
-    SCALE.forEach(f => { f.hidden = f !== attive[step]; f.disabled = false; });
-    $("hint").textContent = "Domanda " + (step + 1) + " di " + attive.length;
+  // mostra insieme le scale della schermata, tutte sbloccate
+  function mostraScale() {
+    SCALE.forEach(f => { f.hidden = !attive.includes(f); f.disabled = false; });
     chiudiInfo();
-    // la scala visibile fa correre il proprio cronometro (quello della scala precedente si ferma)
-    avviaCrono(attive[step].querySelector(".opts").dataset.name);
+    inAvanzamento = false;
   }
 
-  // Scelta di una figura sulla scala visibile: si registra il tempo, la scala si BLOCCA
-  // (fieldset disabilitato: altri tocchi non hanno effetto) e dopo un attimo si passa alla
-  // scala successiva o si registra la risposta. Non esiste più il pulsante "Indietro".
+  // Scelta di una figura: si registra il tempo del voto e la sua posizione nell'ordine, la scala
+  // si BLOCCA (fieldset disabilitato: altri tocchi non hanno effetto). Quando tutte le scale della
+  // schermata hanno un voto, dopo un attimo si registra la risposta. Non si può tornare indietro.
   form.addEventListener("change", e => {
-    const fs = attive[step];
-    const dimVisibile = fs.querySelector(".opts").dataset.name;
-    if (inAvanzamento || e.target.name !== dimVisibile) return;   // una volta sola per scala
-    inAvanzamento = true;
-    const m = misura && misura.dim[dimVisibile];
-    if (m) { m.rt = Math.round(tempoScala(m)); }
-    pausaCrono(); dimCrono = null;
+    const fs = e.target.closest("fieldset.scale");
+    if (!fs || fs.disabled || !attive.includes(fs) || inAvanzamento) return;
+    const dim = fs.querySelector(".opts").dataset.name;
+    if (misura && misura.rt[dim] == null) {
+      const t = tempoSchermata();
+      misura.rt[dim] = Math.round(t - misura.ultimo);
+      misura.ultimo = t;
+      misura.ordine.push(dim);
+    }
     fs.disabled = true;
+    const v = valori();
+    const tutte = attive.every(f => v[f.querySelector(".opts").dataset.name] != null);
+    if (!tutte) return;
+    inAvanzamento = true;
     setTimeout(() => {
       inAvanzamento = false;
-      if (step < attive.length - 1) { step++; mostraScala(); }
-      else if (fase === "umore") registraUmore();   // dopo l'arousal: inizia la storia (o fine)
+      if (fase === "umore") registraUmore();        // stato d'animo: inizia la storia (o fine)
       else if (fase === "prova") esitoProva();      // frase di prova: riscontro, niente salvataggio
-      else registra();                               // dopo la dominanza: frase successiva o pausa
+      else registra();                               // frase: frase successiva o pausa
     }, RITARDO_MS);
   });
 
@@ -2774,7 +2759,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     const box = $("story-text");
     box.textContent = "";
     box.className = "story";
-    fase = "frase"; attive = SCALE; impostaDomande(DOMANDE_FRASE);
+    fase = "frase"; attive = SCALE;
     // immagine della frase, se il dataset la prevede (protocollo B)
     const src = s.immagini && s.immagini[fidx];
     if (src) {
@@ -2800,7 +2785,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     $("p-bar").style.width = pct + "%";
     form.reset();
     nuovaMisura();
-    step = 0; mostraScala();
+    mostraScale();
     // Dopo la prima frase di una storia la pagina torna su al riquadro della storia:
     // sul telefono il riquadro può essere fuori schermo e il cambio di frase passerebbe inosservato.
     if (fidx > 0) {
@@ -2901,9 +2886,42 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     else fineQuestionari();
   });
 
+  // ---------- tempo passato sulle pagine ----------
+  // Per le pagine "di passaggio" si registra quando la persona ci arriva (inizio) e quando la lascia
+  // (fine), e si invia una riga al foglio "tempi_pagine":
+  //  - intro: dall'apertura del sito al clic su "Compila i questionari"
+  //  - spiegazione: pagina "Come funziona lo studio", fino al clic su "Inizia"
+  //  - prova: frase di prova, fino al terzo voto (una riga per ogni tentativo, se la rifà)
+  //  - riscontro_prova: pagina "Ecco come funziona", fino a "Inizia lo studio" o "Rifai la prova"
+  //  - totale_web_app: dall'apertura del sito all'ultima risposta (tempo TOTALE, pause comprese)
+  // Le durate sono tempo di orologio (fine − inizio); pagina_nascosta = 1 se nel frattempo la persona
+  // è passata a un'altra scheda o app.
+  const T_APERTURA = new Date().toISOString();        // istante in cui la pagina è stata aperta
+  function inizioPagina(nome, inizio) {
+    const p = sessione.pagine || (sessione.pagine = {});
+    if (!p[nome]) p[nome] = { inizio: inizio || new Date().toISOString(), nascosta: document.hidden ? 1 : 0 };
+    if (fase_ !== "intro") salvaStato();               // così la ripresa non fa ripartire il tempo
+  }
+  function finePagina(nome) {
+    const p = sessione.pagine && sessione.pagine[nome];
+    if (!p) return;
+    const fine = new Date().toISOString();
+    const tent = sessione.tentativi_pagine || (sessione.tentativi_pagine = {});
+    tent[nome] = (tent[nome] || 0) + 1;
+    accodaLotto([], [], [{ pagina: nome, tentativo: tent[nome], inizio: p.inizio, fine: fine,
+                           durata_ms: Date.parse(fine) - Date.parse(p.inizio), pagina_nascosta: p.nascosta }]);
+    delete sessione.pagine[nome];
+    salvaStato();
+    inviaCoda();
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && sessione.pagine) Object.values(sessione.pagine).forEach(p => { p.nascosta = 1; });
+  });
+
   function fineQuestionari() {
     show("s-quest-fine");
     fase_ = "dopo_questionari"; salvaStato();
+    inizioPagina("spiegazione");                       // pagina "Come funziona lo studio"
   }
 
   // pulsante iniziale: si crea la sessione e si parte con i questionari
@@ -2922,13 +2940,14 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     const span = document.createElement("span");
     span.className = "now"; span.textContent = FRASE_PROVA;
     box.append(span);
-    fase = "prova"; attive = SCALE; impostaDomande(DOMANDE_FRASE);
+    fase = "prova"; attive = SCALE;
     $("p-label").textContent = "Frase di prova · questa risposta non viene salvata";
     $("p-pct").textContent = ""; $("p-bar").style.width = "0%";
     form.reset();
     nuovaMisura();
-    step = 0; mostraScala();
+    mostraScale();
     tStart = performance.now();
+    inizioPagina("prova");
   }
   // descrizione a parole delle risposte date alla prova (nell'ordine delle figure, da sinistra a destra)
   const DESCR = {
@@ -2943,17 +2962,23 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     $("prova-esito").innerHTML = "Hai indicato che, dopo aver letto la frase, ti senti <b>" + descrivi("valenza", v.valenza) +
       "</b> (valenza " + etichetta("valenza", v.valenza) + "), <b>" + descrivi("arousal", v.arousal) +
       "</b> (arousal " + v.arousal + ") e <b>" + descrivi("dominanza", v.dominanza) + "</b> (dominanza " + v.dominanza + ").";
+    finePagina("prova");
     show("s-prova");
+    inizioPagina("riscontro_prova");
   }
   $("b-start").addEventListener("click", () => {
     if (POOL.length === 0) { $("pool-info").textContent = "Nessuna storia caricata nel dataset."; return; }
     avviaQuestionari();
+    sessione.apertura = T_APERTURA;                    // inizio del tempo totale sulla web app
+    inizioPagina("intro", T_APERTURA);
+    finePagina("intro");
   });
-  $("b-inizia").addEventListener("click", avviaProva);
-  $("b-prova-rifai").addEventListener("click", avviaProva);
+  $("b-inizia").addEventListener("click", () => { finePagina("spiegazione"); avviaProva(); });
+  $("b-prova-rifai").addEventListener("click", () => { finePagina("riscontro_prova"); avviaProva(); });
 
   // inizio dello studio vero, dopo la prova
   $("b-prova-ok").addEventListener("click", () => {
+    finePagina("riscontro_prova");
     sessione.storie = estraiSessione();
     sessione.inizio = sessione.inizio || new Date().toISOString();   // di solito già fissato dai questionari
     idx = 0; fidx = 0; fatte = 0;                    // la coda resta: può contenere voti dei questionari
@@ -2968,7 +2993,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   function iniziaUmore() {
     const n = sessione.storie.length;
     show("s-story");
-    fase = "umore"; attive = [SCALE[0], SCALE[1]]; impostaDomande(DOMANDE_UMORE);
+    fase = "umore"; attive = SCALE;   // anche la dominanza
     const box = $("story-text");
     box.className = "story umore";
     box.textContent = idx === 0 ? "Prima di iniziare, fermati un momento e ascoltati: come ti senti in questo momento?"
@@ -2978,14 +3003,14 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
                                        : "Fine · il tuo stato d'animo";
     form.reset();
     nuovaMisura();
-    step = 0; mostraScala();
+    mostraScale();
     tStart = performance.now();
     fase_ = "umore"; salvaStato();
   }
 
   function registraUmore() {
     const v = valori();
-    if (v.valenza == null || v.arousal == null) return;
+    if (!DIMENSIONI.every(d => v[d] != null)) return;
     const n = sessione.storie.length;
     sessione.umore.push({
       momento: idx === 0 ? "inizio" : idx < n ? "dopo_pausa" : "fine",
@@ -2993,7 +3018,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       id_storia_precedente: idx > 0 ? sessione.storie[idx - 1].id : "",
       id_storia_successiva: idx < n ? sessione.storie[idx].id : "",
       pausa_s: idx > 0 ? Math.round(pausaMisurata * 10) / 10 : 0,
-      valenza: v.valenza, arousal: v.arousal,
+      valenza: v.valenza, arousal: v.arousal, dominanza: v.dominanza,
       ...campiMisura()
     });
     accodaLotto([]);                                 // anche lo stato d'animo parte subito
@@ -3055,13 +3080,15 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   // risposte = voti di frase da inviare in questo lotto ([] se il lotto è solo uno stato d'animo);
   // ogni lotto porta anche gli stati d'animo registrati e non ancora inviati
   // questionari = questionari completati da inviare in questo lotto (facoltativo)
-  function accodaLotto(risposte, questionari) {
+  // pagine = tempi delle pagine da inviare in questo lotto (facoltativo)
+  function accodaLotto(risposte, questionari, pagine) {
     nLotto++;
     coda.push({
       lotto: sessione.id + "-" + nLotto,
       risposte: risposte,
       umore: sessione.umore.slice(umoreInviato),
-      questionari: questionari || []
+      questionari: questionari || [],
+      pagine: pagine || []
     });
     umoreInviato = sessione.umore.length;
     salvaStato();
@@ -3089,7 +3116,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
         lotto: l.lotto,
         sessione: sessione.id, inizio: sessione.inizio, fine: sessione.fine || "",
         user_agent: navigator.userAgent, versione: VERSIONE,
-        risposte: l.risposte, umore: l.umore, questionari: l.questionari || []
+        risposte: l.risposte, umore: l.umore, questionari: l.questionari || [], pagine: l.pagine || []
       })
     });
     const out = await res.json();
@@ -3153,6 +3180,10 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     sessione.fine = new Date().toISOString();
     $("p-bar").style.width = "100%";
     fase_ = "fine"; salvaStato();
+    // tempo totale sulla web app: dall'apertura del sito all'ultima risposta (pause comprese)
+    const t0 = sessione.apertura || sessione.inizio;
+    accodaLotto([], [], [{ pagina: "totale_web_app", tentativo: 1, inizio: t0, fine: sessione.fine,
+                           durata_ms: Date.parse(sessione.fine) - Date.parse(t0), pagina_nascosta: "" }]);
     show("s-end");
     tentaSalvataggio();
   }

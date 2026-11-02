@@ -26,19 +26,24 @@ L'elenco delle 90 storie e il motivo della selezione sono in `selezione_90_stori
 
 ## Protocollo
 
-0. **Questionari anonimi** (una volta sola, all'inizio): PANAS → STAI-Y1 → BSI-18, uno per pagina,
-   pulsante "Compila i questionari"; finiti tutti, pulsante "Inizia".
-1. Frase di prova (non salvata) con riscontro sulle risposte date, ripetibile.
-2. Stato d'animo iniziale (valenza, arousal).
-3. 6 storie; ogni frase compare da sola e si valuta con tre scale SAM (valenza, arousal,
-   dominanza), una alla volta. Si descrive **come ci si sente dopo aver letto la frase**,
-   non si dà un voto alla frase.
-4. Il primo tocco su una figura è **definitivo**: non si può tornare indietro.
-5. Dopo ogni storia: pausa obbligatoria di 20 s con timer, poi di nuovo lo stato d'animo.
-6. Stato d'animo finale.
+0. **Pagina iniziale** breve → pulsante "Compila i questionari".
+1. **Questionari anonimi** (una volta sola): PANAS → STAI-Y1 → BSI-18, uno per pagina.
+2. **Pagina "Come funziona lo studio"**: spiegazione di valenza, arousal e dominanza e delle
+   istruzioni → pulsante "Inizia".
+3. Frase di prova (non salvata) con riscontro sulle risposte date, ripetibile.
+4. Stato d'animo iniziale (valenza, arousal, dominanza).
+5. 6 storie; ogni frase compare da sola e sotto compaiono **insieme le tre scale SAM**
+   (valenza, arousal, dominanza), senza frasi-domanda. Si descrive **come ci si sente dopo aver
+   letto la frase**, non si dà un voto alla frase.
+6. Ogni scala si **blocca al primo tocco**: non si può cambiare il voto. Quando le tre scale
+   hanno un voto si passa automaticamente avanti.
+7. Dopo ogni storia: pausa obbligatoria di 20 s con timer, poi di nuovo lo stato d'animo
+   (tre scale). Dopo l'ultima storia, stato d'animo finale.
+8. Schermata finale con il solo ringraziamento; l'invio delle risposte rimaste è controllato
+   e ritentato in silenzio.
 
 Scale: **valenza da −2 a +2** (0 = neutro), arousal e dominanza da 1 a 5.
-Accanto a ogni domanda c'è un pulsante **(i)** che riassume il criterio di valutazione.
+Accanto a ogni scala c'è un pulsante **(i)** che riassume il criterio di valutazione.
 
 Parametri modificabili in cima allo script di `index.html`: `PER_GRUPPO`, `PAUSA_S`,
 `APPS_SCRIPT_URL`, `FRASE_PROVA`.
@@ -66,16 +71,26 @@ questionari non li rifà.
 
 Il foglio **tempi_storie** (calcolato da `Code.gs`, una riga per storia di ogni partecipante,
 aggiornata a ogni frase) contiene:
-`tempo_umore_prima_ms` (valenza + arousal della domanda "come ti senti" mostrata prima della
+`tempo_umore_prima_ms` (valenza + arousal + dominanza della domanda "come ti senti" mostrata prima della
 storia), `tempo_frasi_ms` (somma dei tempi di valenza, arousal e dominanza di tutte le frasi),
 `tempo_storia_ms` (la somma dei due) e `n_frasi_votate`. Lo stato d'animo finale non è sommato.
+
+## Tempo sulle pagine e tempo totale
+
+Il foglio **tempi_pagine** ha una riga per ogni pagina "di passaggio": `intro` (dall'apertura del
+sito a "Compila i questionari"), `spiegazione` (pagina "Come funziona lo studio", fino a "Inizia"),
+`prova` (frase di prova, fino al terzo voto; una riga per tentativo), `riscontro_prova` (fino a
+"Inizia lo studio" o "Rifai la prova") e, a fine sessione, **`totale_web_app`**: tempo totale
+dall'apertura del sito all'ultima risposta, pause comprese. Colonne: `inizio`, `fine`,
+`durata_ms` (tempo di orologio), `tentativo`, `pagina_nascosta`.
 
 ## Misure di risposta
 
 | colonna | significato |
 |---|---|
 | `ricevuto` | timestamp di arrivo della risposta nel foglio |
-| `rt_valenza_ms`, `rt_arousal_ms`, `rt_dominanza_ms` | tempo di risposta su ciascuna scala, contato solo mentre quella scala è sullo schermo (si ferma se la pagina viene nascosta); nel foglio umore solo valenza e arousal |
+| `rt_valenza_ms`, `rt_arousal_ms`, `rt_dominanza_ms` | tempo di ciascun voto: le tre scale sono insieme, quindi va dal voto precedente (o dalla comparsa della schermata, per il primo) al tocco della figura; la somma dei tre è il tempo della schermata (il cronometro si ferma se la pagina viene nascosta). Uguale per frasi e stato d'animo |
+| `ordine_voti` | ordine in cui sono state scelte le scale, es. `V-A-D` |
 | `n_info` | aperture del pulsante (i) |
 | `pagina_nascosta` | 1 se durante la risposta si è passati ad altra scheda/app (tempi non affidabili) |
 
@@ -90,15 +105,15 @@ storia), `tempo_frasi_ms` (somma dei tempi di valenza, arousal e dominanza di tu
   viene chiusa, riaprendola dallo stesso browser si riprende dalla frase in cui ci si era fermati.
 
 Fogli del Google Sheet: **risposte** (una riga per frase), **umore** (una riga per ogni
-stato d'animo), **tempi_storie** (tempo totale di voto per storia), **questionari** e
+stato d'animo), **tempi_storie** (tempo totale di voto per storia), **tempi_pagine** (pagine e tempo totale), **questionari** e
 **voti_…** (questionari), **lotti** (lotti ricevuti, contro i duplicati). Se un foglio ha l'intestazione
 di una versione precedente, lo script lo rinomina (`…_vecchio_<data>`) e ne crea uno nuovo.
 
 ## File
 
 - `index.html`: la web app (storie incluse nel file).
-- `Code.gs`: lo script di Google Apps Script che riceve le risposte (versione **v5**: aprendo
-  l'URL `/exec` deve comparire "codice v5"). Su GitHub è solo una copia di riferimento: quello
+- `Code.gs`: lo script di Google Apps Script che riceve le risposte (versione **v7**: aprendo
+  l'URL `/exec` deve comparire "codice v7"). Su GitHub è solo una copia di riferimento: quello
   che conta è il codice incollato in Apps Script e distribuito con "Nuova versione".
 - `storie_IDEST_90.json`: le 90 storie usate, con `gruppo` e `tipo` (StoryType); sono le stesse
   incluse in `index.html`.
