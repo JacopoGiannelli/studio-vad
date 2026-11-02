@@ -44,7 +44,8 @@ L'elenco delle 90 storie e il motivo della selezione sono in `selezione_90_stori
 
 Scale: **valenza da −2 a +2** (0 = neutro), arousal e dominanza da 1 a 5.
 Accanto a ogni scala c'è un pulsante **(i)** che riassume il criterio di valutazione.
-La barra di avanzamento in alto cresce solo quando una storia è completata (storie finite / storie totali).
+Durante storie, prova e stato d'animo non c'è barra di avanzamento: l'avanzamento (storie completate /
+storie totali) compare solo nella schermata della pausa.
 
 Parametri modificabili in cima allo script di `index.html`: `PER_GRUPPO`, `PAUSA_S`,
 `APPS_SCRIPT_URL`, `FRASE_PROVA`.
