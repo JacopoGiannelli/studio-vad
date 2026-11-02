@@ -2754,6 +2754,15 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   // frasi totali della sessione, per una barra di avanzamento onesta
   let totFrasi = 0, fatte = 0;
 
+  // barra di avanzamento: cresce solo quando una storia è COMPLETATA (storie finite / storie totali),
+  // non a ogni frase; durante una storia resta ferma
+  function aggiornaBarra() {
+    const n = sessione.storie.length || 1;
+    const pct = Math.round(Math.min(idx, n) / n * 100);
+    $("p-pct").textContent = pct + "%";
+    $("p-bar").style.width = pct + "%";
+  }
+
   function renderFrase() {
     const s = sessione.storie[idx];
     const box = $("story-text");
@@ -2780,9 +2789,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     box.append(span);
     $("p-label").textContent = "Storia " + (idx + 1) + " di " + sessione.storie.length +
       " · frase " + (fidx + 1) + " di " + s.frasi.length;
-    const pct = Math.round(fatte / totFrasi * 100);
-    $("p-pct").textContent = pct + "%";
-    $("p-bar").style.width = pct + "%";
+    aggiornaBarra();
     form.reset();
     nuovaMisura();
     mostraScale();
@@ -3001,6 +3008,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
                                 : "Ultima domanda: come ti senti adesso?";
     $("p-label").textContent = idx < n ? "Prima della storia " + (idx + 1) + " di " + n + " · il tuo stato d'animo"
                                        : "Fine · il tuo stato d'animo";
+    aggiornaBarra();
     form.reset();
     nuovaMisura();
     mostraScale();
