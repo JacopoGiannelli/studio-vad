@@ -206,6 +206,7 @@ body.voto .info { width: 1.4rem; height: 1.4rem; }
            border-radius: 12px; padding: 18px 20px; display: grid; gap: 10px; }
 .profilo h2 { font-size: 1.5rem; }
 .grafico { display: grid; gap: 6px; justify-items: center; margin-top: 4px; }
+.grafico-intro { margin: 0; text-align: center; font-size: .95rem; color: var(--muted); }
 .grafico svg { width: 100%; max-width: 360px; height: auto; display: block; }
 .grafico-titolo { font-weight: 600; font-size: 1rem; }
 /* salvataggio del profilo come immagine (solo schermata finale) */
@@ -2548,6 +2549,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       <!-- evoluzione dello stato d'animo nella storia che ha pesato di più (solo disegnata, non salvata) -->
       <figure class="grafico" id="profilo-grafico" hidden style="margin:0">
         <p class="grafico-titolo">La traiettoria del tuo mood</p>
+        <p class="grafico-intro" id="profilo-grafico-intro"></p>
         <div id="profilo-svg"></div>
         <figcaption id="profilo-didascalia"></figcaption>
       </figure>
@@ -2881,7 +2883,8 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   // Si ricalcola solo se cambia davvero la finestra (es. finestra del computer ridimensionata):
   // le piccole variazioni d'altezza del telefono (barra dell'indirizzo, schermo intero) non contano.
   const SAM_MIN = 26, SAM_MAX = 120;        // limiti della figura in px: sotto è troppo piccola, sopra troppo grande
-  const TOLLERANZA_ALTEZZA = 120;           // px di altezza che possono cambiare senza ricalcolare
+  const FS_MIN = 0.8;                       // dimensione minima del testo della frase (rem)
+  const TOLLERANZA_ALTEZZA = 120;          // px di altezza che possono cambiare senza ricalcolare
   // i testi più lunghi (in caratteri): tra questi si misura quello che occupa davvero più righe
   const TESTI_LUNGHI = [FRASE_PROVA, ...TESTI_UMORE, ...POOL.flatMap(s => s.frasi)]
     .sort((a, b) => b.length - a.length).slice(0, 8);
@@ -2940,16 +2943,22 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     // 3) limite verticale: la misura più grande con cui la pagina non scorre (ricerca binaria:
     //    si prova la metà dell'intervallo e si tiene la metà giusta, ~7 prove invece di ~50)
     const sta = () => document.documentElement.scrollHeight <= window.innerHeight + 1;
+    //    Priorità alle figure: restano grandi (massimo consentito dalla colonna); se non ci stanno in
+    //    altezza si riduce prima il testo (fino a FS_MIN) e solo poi le figure.
     let lo = SAM_MIN, hi = wMax;
-    impostaMisure(lo, fs);
+    impostaMisure(wMax, fs);
+    while (!sta() && fs > FS_MIN) { fs = Math.max(FS_MIN, fs - 0.05); impostaMisure(wMax, fs); }
     if (sta()) {
-      while (lo < hi) {
-        const m = Math.ceil((lo + hi) / 2);
-        impostaMisure(m, fs);
-        if (sta()) lo = m; else hi = m - 1;
-      }
+      lo = wMax;
     } else {
-      while (!sta() && fs > 0.8) { fs -= 0.05; impostaMisure(lo, fs); }   // schermo molto basso
+      impostaMisure(lo, fs);
+      if (sta()) {
+        while (lo < hi) {
+          const m = Math.ceil((lo + hi) / 2);
+          impostaMisure(m, fs);
+          if (sta()) lo = m; else hi = m - 1;
+        }
+      }
     }
     impostaMisure(lo, fs);
     // 4) la schermata torna com'era
@@ -3580,6 +3589,11 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     const ordine = storiaPiuPesante(p.stile), g = ordine != null && graficoStoria(ordine);
     if (g) {
       $("profilo-svg").innerHTML = g.svg;
+      // dice a quale delle storie lette corrisponde il grafico (posizione di lettura + tipo di storia)
+      const rg = (sessione.risposte || []).find(r => r.ordine === ordine);
+      const tipo = rg && GRUPPO_SING[Number(rg.gruppo)];
+      $("profilo-grafico-intro").textContent = "Questa è la traiettoria della storia che ha influenzato di più il tuo profilo: la " +
+        ordine + "ª delle " + sessione.storie.length + " storie che hai letto" + (tipo ? ", " + tipo : "") + ".";
       $("profilo-didascalia").textContent = "○ prima frase · ★ ultima frase · un punto per ogni frase (" + g.n + ") · valenza e arousal da 0 a 1";
       $("profilo-grafico").hidden = false;
     }
@@ -3636,7 +3650,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       eyebrow: "COME HAI VISSUTO LE STORIE",
       nome: $("profilo-nome").textContent, descr: $("profilo-descr").textContent,
       dettagli: $("profilo-dettagli").textContent,
-      titolo: graf ? "La traiettoria del tuo mood" : "", didascalia: graf ? $("profilo-didascalia").textContent : "",
+      titolo: graf ? "La traiettoria del tuo mood" : "", intro: graf ? $("profilo-grafico-intro").textContent : "", didascalia: graf ? $("profilo-didascalia").textContent : "",
       nota: "Un gioco basato sulle risposte di oggi alle storie: non è una valutazione psicologica.",
       firma: "Studio VAD · Università di Pisa"
     };
@@ -3654,6 +3668,8 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       if (graf) {
         ctx.font = "600 32px " + SANS; ctx.textAlign = "center";
         if (disegna) ctx.fillText(testi.titolo, W / 2, y); y += 52;
+        ctx.font = "400 26px " + SANS; ctx.fillStyle = varColore("--muted");
+        y = scriviACapo(ctx, testi.intro, W / 2, y, LT, 38, disegna) + 14;
         if (disegna) ctx.drawImage(graf, (W - LATO) / 2, y, LATO, HG); y += HG + 12;
         ctx.font = "400 24px " + SANS; ctx.fillStyle = varColore("--muted");
         y = scriviACapo(ctx, testi.didascalia, W / 2, y, LT, 34, disegna) + 24;
