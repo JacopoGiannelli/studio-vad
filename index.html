@@ -2566,6 +2566,11 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       <button class="btn" id="b-salva-profilo" type="button">Salva il tuo profilo come immagine</button>
       <p class="note" id="salva-esito" aria-live="polite"></p>
     </div>
+    <!-- condivisione del link dello studio con i propri contatti (WhatsApp ecc.) -->
+    <div class="salva" id="condividi-studio">
+      <button class="btn" id="b-condividi" type="button">Condividi lo studio con i tuoi contatti</button>
+      <p class="note" id="condividi-esito" aria-live="polite"></p>
+    </div>
     <!-- compare solo se, dopo alcuni tentativi, qualche risposta non è ancora arrivata al foglio -->
     <p class="note" id="invio-avviso" hidden>Alcune risposte non sono ancora state inviate: controlla la connessione e lascia aperta questa pagina ancora qualche istante.</p>
   </div>
@@ -3734,6 +3739,26 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       scaricaImmagine(immagineProfilo);
       esito.textContent = "Immagine scaricata (" + NOME_FILE + ").";
     }
+  });
+
+  // condivisione del link dello studio: menu di condivisione del telefono (WhatsApp, Telegram, SMS…);
+  // dove non c'è, si copia il link negli appunti. Si condivide solo l'indirizzo della pagina, nessun dato.
+  $("b-condividi").addEventListener("click", () => {
+    const esito = $("condividi-esito");
+    const link = location.origin + location.pathname;
+    const testo = "Ho partecipato a uno studio dell'Università di Pisa sulle emozioni che si provano leggendo brevi storie. Se ti va, partecipa anche tu:";
+    esito.textContent = "";
+    const copia = () => {
+      const ok = () => { esito.textContent = "Link copiato: incollalo dove vuoi (WhatsApp, e-mail…)."; };
+      const no = () => { esito.textContent = "Copia questo link: " + link; };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(ok, no); else no();
+    };
+    if (navigator.share) {
+      navigator.share({ title: "Studio sulle emozioni · Università di Pisa", text: testo, url: link }).catch(e => {
+        if (e && e.name === "AbortError") return;       // chiuso il menu: nessun problema
+        copia();
+      });
+    } else copia();
   });
 
   async function concludi() {
