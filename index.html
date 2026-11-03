@@ -49,6 +49,9 @@
 html, body { background: var(--bg); color: var(--fg); }
 body { font-family: var(--font-ui); font-size: 16px; line-height: 1.55; }
 .wrap { max-width: 44rem; margin: 0 auto; padding-inline: 16px; padding-block: 32px 64px; display: grid; gap: 28px; }
+/* un .wrap dentro il <main> è un elemento della griglia con margini automatici: senza width si restringerebbe
+   alla larghezza del contenuto (frase corta → colonne e figure SAM piccole) */
+.wrap .wrap { width: 100%; }
 
 h1, h2 { font-family: var(--font-read); font-weight: 600; text-wrap: balance; margin: 0; line-height: 1.2; }
 h1 { font-size: clamp(1.7rem, 4vw, 2.2rem); }
@@ -195,6 +198,9 @@ body.voto #s-story { gap: 10px; }
 body.voto .story { padding: 12px 16px; font-size: var(--fs-frase, 1.15rem); line-height: 1.5; }
 body.voto .story .frase-img { max-height: 28vh; margin-bottom: 8px; }
 body.voto .scales { gap: 8px; }
+/* più spazio alle figure: margini laterali e spazi tra le colonne più stretti (le figure sono limitate dalla larghezza della colonna) */
+body.voto main.wrap { padding-inline: 8px; }
+body.voto .scale .opts { gap: 6px; }
 body.voto .scale { gap: 2px; }
 body.voto .scale legend { font-size: .95rem; }
 body.voto .scale .poles { font-size: .72rem; }
@@ -2883,7 +2889,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   // Si ricalcola solo se cambia davvero la finestra (es. finestra del computer ridimensionata):
   // le piccole variazioni d'altezza del telefono (barra dell'indirizzo, schermo intero) non contano.
   const SAM_MIN = 26, SAM_MAX = 120;        // limiti della figura in px: sotto è troppo piccola, sopra troppo grande
-  const FS_MIN = 0.8;                       // dimensione minima del testo della frase (rem)
+  const FS_START = 1.4, FS_MIN = 1.15;      // testo della frase (rem): si parte grande e non si scende sotto il valore base
   const TOLLERANZA_ALTEZZA = 120;          // px di altezza che possono cambiare senza ricalcolare
   // i testi più lunghi (in caratteri): tra questi si misura quello che occupa davvero più righe
   const TESTI_LUNGHI = [FRASE_PROVA, ...TESTI_UMORE, ...POOL.flatMap(s => s.frasi)]
@@ -2931,7 +2937,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       box.append(span);
     };
     // 1) il testo che occupa più altezza (a parità di caratteri, contano anche le parole lunghe)
-    let fs = 1.15;
+    let fs = FS_START;
     impostaMisure(SAM_MIN, fs);
     let peggiore = TESTI_LUNGHI[0] || "", hMax = -1;
     for (const t of TESTI_LUNGHI) { metti(t); const h = box.offsetHeight; if (h > hMax) { hMax = h; peggiore = t; } }
