@@ -111,6 +111,10 @@ ol.steps { margin: 0; padding-left: 1.3rem; display: grid; gap: 6px; }
 .tip { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--c, var(--accent)); border-radius: 8px;
        padding: 10px 12px; font-size: .9rem; line-height: 1.5; display: grid; gap: 6px; }
 .tip ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 2px; }
+/* il riquadro della (i) è un fumetto SOVRAPPOSTO: compare sopra le figure senza spostare niente,
+   così la schermata resta tutta nello schermo (si chiude con la (i) o toccando fuori) */
+.scale { position: relative; }
+.scale .tip { position: absolute; left: 0; right: 0; top: 2rem; z-index: 20; box-shadow: 0 8px 24px rgba(0, 0, 0, .28); }
 /* scala già votata: bloccata finché non compare la domanda successiva (niente ripensamenti) */
 .scale:disabled label { cursor: default; }
 /* Questionari: una pagina per questionario, ogni item con la sua riga di risposte */
@@ -130,7 +134,7 @@ ol.q-item { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; c
 
 
 .scale:disabled input:checked + label { color: var(--c); }
-.scale .opts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.scale .opts { display: grid; grid-template-columns: repeat(5, 1fr); gap: clamp(10px, 3.5vw, 22px); }
 .scale input { position: absolute; opacity: 0; pointer-events: none; }
 .scale label { display: grid; justify-items: center; align-content: end; gap: 2px; padding: 3px 1px 3px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg); font: 600 .8rem var(--font-mono); cursor: pointer; user-select: none; transition: background .15s, border-color .15s, color .15s; }
 /* figure SAM: disegnate in SVG con currentColor, così si invertono quando selezionate */
@@ -2781,6 +2785,8 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     btn.addEventListener("click", () => { clearTimeout(attesa); x.fissato = !x.fissato || tip.hidden; apriInfo(x, x.fissato); });
   });
   document.addEventListener("keydown", e => { if (e.key === "Escape") chiudiInfo(); });
+  // un tocco fuori dal fumetto e dalla (i) lo chiude
+  document.addEventListener("pointerdown", e => { if (!e.target.closest(".tip, .info")) chiudiInfo(); });
 
   // mostra insieme le scale della schermata, tutte sbloccate
   function mostraScale() {
