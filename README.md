@@ -48,8 +48,10 @@ Telefono sempre in verticale: su Android (Chrome), al tocco di "Compila i questi
 "Riprendi" la pagina passa a schermo intero e blocca l'orientamento verticale; su tutti i telefoni,
 se il telefono è in orizzontale la pagina è coperta da un avviso "tieni il telefono in verticale".
 In quei momenti il cronometro dei voti è fermo e la risposta ha `pagina_nascosta` = 1.
-Sulle schermate di voto frase e tre righe di figure stanno sempre nell'altezza dello schermo:
-le figure (e se serve il testo) si rimpiccioliscono da sole. Durante storie, prova e stato d'animo non c'è barra di avanzamento: l'avanzamento (storie completate /
+Sulle schermate di voto frase e tre righe di figure stanno sempre nell'altezza dello schermo.
+Le figure hanno una misura FISSA per tutto l'esperimento, che dipende solo dallo schermo: è la più
+grande con cui anche la frase più lunga del dataset + tre righe di figure stanno in verticale senza
+uscire in orizzontale (si ricalcola solo se cambia la finestra). Durante storie, prova e stato d'animo non c'è barra di avanzamento: l'avanzamento (storie completate /
 storie totali) compare solo nella schermata della pausa.
 
 Parametri modificabili in cima allo script di `index.html`: `PER_GRUPPO`, `PAUSA_S`,
@@ -146,3 +148,9 @@ di una versione precedente, lo script lo rinomina (`…_vecchio_<data>`) e ne cr
 - `storie_IDEST_it.json`: tutte le 196 storie IDEST tradotte (≥ 900 caratteri). Le 4 storie
   reintegrate nei gruppi 4 e 5 (SW022, SW023, SW024, FR37) non sono in questo file perché in
   italiano sono sotto i 900 caratteri.
+
+## Profilo come immagine
+
+Nella schermata finale (e solo lì) il pulsante **"Salva il tuo profilo come immagine"**
+crea un PNG con profilo e grafico. Sul telefono apre la condivisione (Salva immagine, Instagram…),
+sul computer scarica il file. L'immagine resta sul dispositivo: non viene inviata al foglio.

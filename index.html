@@ -188,7 +188,8 @@ ol.q-item { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; c
 /* ---- schermata di voto adattata all'altezza dello schermo ----
    Con la classe "voto" sul <body> (frase di prova, frasi, stato d'animo) spazi e margini si stringono,
    e la dimensione delle figure SAM (--sam-w) e del testo della frase (--fs-frase) viene calcolata
-   dallo script (adattaSchermo) in modo che frase + tre righe di figure stiano tutte in verticale. */
+   dallo script (adattaSchermo) UNA VOLTA in base allo schermo, uguale per tutto l'esperimento:
+   la più grande con cui anche la frase più lunga + tre righe di figure stanno in verticale. */
 body.voto main.wrap { padding-block: 10px; gap: 10px; }
 body.voto #s-story { gap: 10px; }
 body.voto .story { padding: 12px 16px; font-size: var(--fs-frase, 1.15rem); line-height: 1.5; }
@@ -207,6 +208,9 @@ body.voto .info { width: 1.4rem; height: 1.4rem; }
 .grafico { display: grid; gap: 6px; justify-items: center; margin-top: 4px; }
 .grafico svg { width: 100%; max-width: 360px; height: auto; display: block; }
 .grafico-titolo { font-weight: 600; font-size: 1rem; }
+/* salvataggio del profilo come immagine (solo schermata finale) */
+.salva { display: grid; gap: 8px; justify-items: start; }
+.salva .note:empty { display: none; }
 .grafico figcaption { font-size: .85rem; color: var(--muted); text-align: center; max-width: 36rem; }
 
 
@@ -2549,6 +2553,11 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       </figure>
       <p class="note">Questo profilo è solo un gioco basato sulle tue risposte di oggi alle storie: non è una valutazione psicologica e non usa nessuna risposta dei questionari.</p>
     </section>
+    <!-- profilo salvato come immagine: SOLO in questa schermata finale (vedi preparaImmagineProfilo) -->
+    <div class="salva" id="salva-profilo" hidden>
+      <button class="btn" id="b-salva-profilo" type="button">Salva il tuo profilo come immagine</button>
+      <p class="note" id="salva-esito" aria-live="polite"></p>
+    </div>
     <!-- compare solo se, dopo alcuni tentativi, qualche risposta non è ancora arrivata al foglio -->
     <p class="note" id="invio-avviso" hidden>Alcune risposte non sono ancora state inviate: controlla la connessione e lascia aperta questa pagina ancora qualche istante.</p>
   </div>
@@ -2575,6 +2584,13 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   const CHIAVE_STATO = "vad_stato_v3_" + VERSIONE;
   // frase di prova mostrata prima dello studio: la risposta NON viene salvata
   const FRASE_PROVA = "Mentre torno a casa inizia a piovere forte e mi accorgo di aver dimenticato l'ombrello.";
+  // domande sullo stato d'animo: prima della prima storia, tra una storia e l'altra, alla fine
+  // (servono anche ad adattaSchermo, che deve conoscere tutti i testi che possono stare sopra le figure)
+  const TESTI_UMORE = [
+    "Prima di iniziare, fermati un momento e ascoltati: come ti senti in questo momento?",
+    "Prima della prossima storia: come ti senti in questo momento?",
+    "Ultima domanda: come ti senti adesso?"
+  ];
   // misure registrate per ogni frase e ogni stato d'animo, oltre ai voti (stesse colonne nel foglio)
   const COLONNE_MISURE = ["rt_valenza_ms", "rt_arousal_ms", "rt_dominanza_ms", "n_info", "pagina_nascosta", "ordine_voti"];
   // con ?debug alla fine dell'indirizzo compare in basso l'esito di ogni invio al foglio
@@ -2852,26 +2868,94 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     window.scrollTo({ top: 0 });
   }
 
-  // ---------- tutto nello schermo, in verticale ----------
-  // Sulle schermate di voto (prova, frasi, stato d'animo) frase e tre righe di figure devono stare
-  // nell'altezza dello schermo senza scorrere. Si parte dalle dimensioni normali e, finché la pagina
-  // è più alta dello schermo, si rimpiccioliscono le figure (fino a 26 px) e poi il testo della frase.
-  // Si ricalcola a ogni nuova schermata e quando cambia la finestra (es. telefono girato).
+  // ---------- tutto nello schermo, in verticale, con figure di misura FISSA ----------
+  // Prima la misura delle figure partiva da 72 px e si rimpiccioliva finché ci stava QUELLA frase:
+  // con una frase lunga le figure diventavano più piccole, con una corta più grandi. Ora la misura
+  // dipende solo dallo schermo ed è la stessa per tutto l'esperimento (prova, frasi, stato d'animo).
+  // Si calcola mettendo sopra le figure il "caso peggiore", cioè il testo più alto che può comparire
+  // (frasi di TUTTE le storie del dataset, frase di prova, domande sullo stato d'animo), e cercando
+  // la misura più grande che:
+  //   - non supera la larghezza di una colonna (5 figure per riga: nessuna esce in orizzontale);
+  //   - fa stare frase + tre righe di figure nell'altezza dello schermo, senza scorrere.
+  // Se nemmeno con le figure al minimo ci sta, si rimpicciolisce (sempre una volta per tutte) il testo.
+  // Si ricalcola solo se cambia davvero la finestra (es. finestra del computer ridimensionata):
+  // le piccole variazioni d'altezza del telefono (barra dell'indirizzo, schermo intero) non contano.
+  const SAM_MIN = 26, SAM_MAX = 120;        // limiti della figura in px: sotto è troppo piccola, sopra troppo grande
+  const TOLLERANZA_ALTEZZA = 120;           // px di altezza che possono cambiare senza ricalcolare
+  // i testi più lunghi (in caratteri): tra questi si misura quello che occupa davvero più righe
+  const TESTI_LUNGHI = [FRASE_PROVA, ...TESTI_UMORE, ...POOL.flatMap(s => s.frasi)]
+    .sort((a, b) => b.length - a.length).slice(0, 8);
+  const CON_IMMAGINI = POOL.some(s => s.immagini && s.immagini.some(Boolean));   // protocollo B
+  let misuraFissata = null;                 // { W, H, w, fs }: schermo per cui è stata calcolata e misure
+
+  function impostaMisure(w, fs) {
+    const root = document.documentElement.style;
+    root.setProperty("--sam-w", w + "px");
+    root.setProperty("--sam-dom-w", Math.round(w * 1.11) + "px");   // la dominanza ha il riquadro incluso
+    root.setProperty("--fs-frase", fs.toFixed(2) + "rem");
+  }
+
   function adattaSchermo() {
     const voto = !$("s-story").hidden;
     document.body.classList.toggle("voto", voto);
-    const root = document.documentElement.style;
-    let w = 72, fs = 1.15;
-    const imposta = () => {
-      root.setProperty("--sam-w", w + "px");
-      root.setProperty("--sam-dom-w", Math.round(w * 1.11) + "px");   // la dominanza ha il riquadro incluso
-      root.setProperty("--fs-frase", fs.toFixed(2) + "rem");
+    if (!voto) return;                      // fuori dal voto le misure non servono (restano quelle fissate)
+    const W = window.innerWidth, H = window.innerHeight;
+    if (misuraFissata && misuraFissata.W === W && Math.abs(misuraFissata.H - H) < TOLLERANZA_ALTEZZA) {
+      impostaMisure(misuraFissata.w, misuraFissata.fs);   // stesso schermo: stessa misura di prima
+      return;
+    }
+    misuraFissata = Object.assign({ W, H }, calcolaMisure());
+  }
+
+  // Calcolo vero e proprio. Per misurare si mette temporaneamente nel riquadro il testo peggiore e si
+  // mostrano tutte e tre le scale; alla fine la schermata viene rimessa esattamente com'era.
+  // Tutto avviene in modo sincrono, quindi chi usa la pagina non vede niente di questo.
+  function calcolaMisure() {
+    const box = $("story-text");
+    const contenuto = Array.from(box.childNodes), classe = box.className;
+    const eranoNascoste = SCALE.map(f => f.hidden);
+    SCALE.forEach(f => { f.hidden = false; });
+    box.className = "story";
+    const metti = t => {
+      box.textContent = "";
+      if (CON_IMMAGINI) {                     // con le immagini si tiene conto anche del loro spazio (28vh)
+        const d = document.createElement("div");
+        d.className = "frase-img"; d.style.height = "28vh";
+        box.append(d);
+      }
+      const span = document.createElement("span");
+      span.className = "now"; span.textContent = t;
+      box.append(span);
     };
-    imposta();
-    if (!voto) return;
+    // 1) il testo che occupa più altezza (a parità di caratteri, contano anche le parole lunghe)
+    let fs = 1.15;
+    impostaMisure(SAM_MIN, fs);
+    let peggiore = TESTI_LUNGHI[0] || "", hMax = -1;
+    for (const t of TESTI_LUNGHI) { metti(t); const h = box.offsetHeight; if (h > hMax) { hMax = h; peggiore = t; } }
+    metti(peggiore);
+    // 2) limite orizzontale: larghezza di una colonna di figure (padding di 1 px per lato);
+    //    la dominanza è larga 1,11 volte le altre, quindi è lei a decidere il massimo
+    const colonna = form.querySelector(".opts label").clientWidth - 2;
+    const wMax = Math.max(SAM_MIN, Math.min(SAM_MAX, Math.floor(colonna / 1.11)));
+    // 3) limite verticale: la misura più grande con cui la pagina non scorre (ricerca binaria:
+    //    si prova la metà dell'intervallo e si tiene la metà giusta, ~7 prove invece di ~50)
     const sta = () => document.documentElement.scrollHeight <= window.innerHeight + 1;
-    while (!sta() && w > 26) { w -= 2; imposta(); }
-    while (!sta() && fs > 0.8) { fs -= 0.05; imposta(); }
+    let lo = SAM_MIN, hi = wMax;
+    impostaMisure(lo, fs);
+    if (sta()) {
+      while (lo < hi) {
+        const m = Math.ceil((lo + hi) / 2);
+        impostaMisure(m, fs);
+        if (sta()) lo = m; else hi = m - 1;
+      }
+    } else {
+      while (!sta() && fs > 0.8) { fs -= 0.05; impostaMisure(lo, fs); }   // schermo molto basso
+    }
+    impostaMisure(lo, fs);
+    // 4) la schermata torna com'era
+    box.textContent = ""; box.append(...contenuto); box.className = classe;
+    SCALE.forEach((f, i) => { f.hidden = eranoNascoste[i]; });
+    return { w: lo, fs };
   }
   let attesaResize = 0;
   window.addEventListener("resize", () => { clearTimeout(attesaResize); attesaResize = setTimeout(adattaSchermo, 150); });
@@ -3132,9 +3216,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     fase = "umore"; attive = SCALE;   // anche la dominanza
     const box = $("story-text");
     box.className = "story umore";
-    box.textContent = idx === 0 ? "Prima di iniziare, fermati un momento e ascoltati: come ti senti in questo momento?"
-                    : idx < n   ? "Prima della prossima storia: come ti senti in questo momento?"
-                                : "Ultima domanda: come ti senti adesso?";
+    box.textContent = idx === 0 ? TESTI_UMORE[0] : idx < n ? TESTI_UMORE[1] : TESTI_UMORE[2];
     $("p-label").textContent = idx < n ? "Prima della storia " + (idx + 1) + " di " + n + " · il tuo stato d'animo"
                                        : "Fine · il tuo stato d'animo";
     aggiornaBarra();
@@ -3501,7 +3583,136 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       $("profilo-didascalia").textContent = "○ prima frase · ★ ultima frase · un punto per ogni frase (" + g.n + ") · valenza e arousal da 0 a 1";
       $("profilo-grafico").hidden = false;
     }
+    preparaImmagineProfilo();                        // pulsante "Salva il tuo profilo come immagine"
   }
+
+  // ---------- profilo salvato come immagine (solo nella schermata finale) ----------
+  // Su un <canvas> si disegna una "cartolina" con profilo e grafico, poi la si trasforma in PNG.
+  // L'immagine si prepara SUBITO quando compare il profilo: così al tocco del pulsante la condivisione
+  // parte all'istante (Safari su iPhone la permette solo come risposta immediata a un tocco).
+  // Sul telefono si apre il menu di condivisione (Salva immagine, Instagram, WhatsApp…); sul computer
+  // il file viene scaricato. Niente viene inviato al foglio: l'immagine resta sul dispositivo.
+  let immagineProfilo = null;               // Blob PNG pronto da condividere
+  const NOME_FILE = "il-mio-profilo-di-lettura.png";
+  const varColore = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+  // scrive un testo andando a capo entro "largh"; se disegna = false misura soltanto. Restituisce la nuova y.
+  function scriviACapo(ctx, testo, x, y, largh, interlinea, disegna) {
+    let riga = "";
+    for (const parola of String(testo).split(/\s+/).filter(Boolean)) {
+      const prova = riga ? riga + " " + parola : parola;
+      if (riga && ctx.measureText(prova).width > largh) { if (disegna) ctx.fillText(riga, x, y); y += interlinea; riga = parola; }
+      else riga = prova;
+    }
+    if (riga) { if (disegna) ctx.fillText(riga, x, y); y += interlinea; }
+    return y;
+  }
+
+  // il grafico SVG diventa un'immagine: le variabili CSS (var(--accent) ecc.) vanno sostituite
+  // con i colori veri, perché un SVG trasformato in immagine non vede il foglio di stile della pagina
+  function graficoComeImmagine(lato) {
+    const el = $("profilo-svg").querySelector("svg");
+    if (!el || $("profilo-grafico").hidden) return Promise.resolve(null);
+    let s = new XMLSerializer().serializeToString(el).replace(/var\((--[\w-]+)\)/g, (_, n) => varColore(n));
+    if (!/^<svg[^>]*xmlns=/.test(s)) s = s.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+    s = s.replace(/^<svg/, '<svg width="' + lato + '" height="' + Math.round(lato * 352 / 364) + '" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif"');
+    return new Promise(ok => {
+      const img = new Image();
+      img.onload = () => ok(img);
+      img.onerror = () => ok(null);           // se non si riesce, l'immagine esce senza grafico
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s);
+    });
+  }
+
+  // disegna la cartolina (larga 1080 px, come un post) e restituisce il PNG
+  async function disegnaCartolina(conGrafico) {
+    try { await document.fonts.ready; } catch (e) {}
+    const W = 1080, M = 72, IN = 56, LT = W - 2 * M - 2 * IN;   // margini esterni e interni, larghezza del testo
+    const LATO = 640;                                             // larghezza del grafico
+    const graf = conGrafico ? await graficoComeImmagine(LATO) : null;
+    const HG = graf ? Math.round(LATO * 352 / 364) : 0;
+    const SANS = '"IBM Plex Sans", system-ui, sans-serif', SERIF = '"Literata", Georgia, serif';
+    const testi = {
+      eyebrow: "COME HAI VISSUTO LE STORIE",
+      nome: $("profilo-nome").textContent, descr: $("profilo-descr").textContent,
+      dettagli: $("profilo-dettagli").textContent,
+      titolo: graf ? "La traiettoria del tuo mood" : "", didascalia: graf ? $("profilo-didascalia").textContent : "",
+      nota: "Un gioco basato sulle risposte di oggi alle storie: non è una valutazione psicologica.",
+      firma: "Studio VAD · Università di Pisa"
+    };
+    // impaginazione: la stessa funzione prima misura l'altezza (disegna = false) e poi disegna
+    const impagina = (ctx, disegna) => {
+      const x = M + IN; let y = M + IN;
+      ctx.textBaseline = "top"; ctx.textAlign = "left";
+      ctx.font = "600 26px " + SANS; ctx.fillStyle = varColore("--muted");
+      if (disegna) ctx.fillText(testi.eyebrow, x, y); y += 52;
+      ctx.font = "600 60px " + SERIF; ctx.fillStyle = varColore("--fg");
+      y = scriviACapo(ctx, testi.nome, x, y, LT, 74, disegna) + 18;
+      ctx.font = "400 32px " + SANS;
+      y = scriviACapo(ctx, testi.descr, x, y, LT, 46, disegna) + 18;
+      y = scriviACapo(ctx, testi.dettagli, x, y, LT, 46, disegna) + 30;
+      if (graf) {
+        ctx.font = "600 32px " + SANS; ctx.textAlign = "center";
+        if (disegna) ctx.fillText(testi.titolo, W / 2, y); y += 52;
+        if (disegna) ctx.drawImage(graf, (W - LATO) / 2, y, LATO, HG); y += HG + 12;
+        ctx.font = "400 24px " + SANS; ctx.fillStyle = varColore("--muted");
+        y = scriviACapo(ctx, testi.didascalia, W / 2, y, LT, 34, disegna) + 24;
+        ctx.textAlign = "left";
+      }
+      ctx.font = "400 24px " + SANS; ctx.fillStyle = varColore("--muted");
+      y = scriviACapo(ctx, testi.nota, x, y, LT, 34, disegna);
+      return y + IN + M;
+    };
+    const cv = document.createElement("canvas");
+    cv.width = W; cv.height = impagina(cv.getContext("2d"), false) + 40;
+    const ctx = cv.getContext("2d");
+    ctx.fillStyle = varColore("--bg"); ctx.fillRect(0, 0, W, cv.height);
+    // riquadro del profilo con la striscia colorata a sinistra, come sullo schermo
+    const H = cv.height - 2 * M - 40;
+    ctx.fillStyle = varColore("--surface");
+    ctx.beginPath(); (ctx.roundRect ? ctx.roundRect(M, M, W - 2 * M, H, 24) : ctx.rect(M, M, W - 2 * M, H)); ctx.fill();
+    ctx.fillStyle = varColore("--accent"); ctx.fillRect(M, M + 12, 8, H - 24);
+    impagina(ctx, true);
+    ctx.font = "500 22px " + SANS; ctx.fillStyle = varColore("--muted"); ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.fillText(testi.firma, W / 2, cv.height - M + 4);
+    // toBlob fallisce se il browser considera "sporca" la tela per via dell'SVG: in quel caso si
+    // rifà la cartolina senza grafico
+    return new Promise((ok, ko) => {
+      try { cv.toBlob(b => (b ? ok(b) : ko(new Error("vuota"))), "image/png"); } catch (e) { ko(e); }
+    });
+  }
+
+  async function preparaImmagineProfilo() {
+    immagineProfilo = null;
+    try { immagineProfilo = await disegnaCartolina(true); }
+    catch (e) { try { immagineProfilo = await disegnaCartolina(false); } catch (e2) { immagineProfilo = null; } }
+    $("salva-profilo").hidden = !immagineProfilo;  // se non si riesce, il pulsante non compare
+  }
+
+  function scaricaImmagine(blob) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = NOME_FILE;
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+
+  $("b-salva-profilo").addEventListener("click", () => {
+    if (!immagineProfilo) return;
+    const esito = $("salva-esito");
+    esito.textContent = "";
+    const file = new File([immagineProfilo], NOME_FILE, { type: "image/png" });
+    const telefono = window.matchMedia("(pointer: coarse)").matches;
+    if (telefono && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: "Il mio profilo di lettura" }).catch(e => {
+        if (e && e.name === "AbortError") return;       // chiuso il menu: nessun problema
+        scaricaImmagine(immagineProfilo);
+        esito.textContent = "Immagine scaricata.";
+      });
+    } else {
+      scaricaImmagine(immagineProfilo);
+      esito.textContent = "Immagine scaricata (" + NOME_FILE + ").";
+    }
+  });
 
   async function concludi() {
     sessione.fine = new Date().toISOString();
