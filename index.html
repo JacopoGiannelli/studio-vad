@@ -204,6 +204,11 @@ body.voto .info { width: 1.4rem; height: 1.4rem; }
 .profilo { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent);
            border-radius: 12px; padding: 18px 20px; display: grid; gap: 10px; }
 .profilo h2 { font-size: 1.5rem; }
+.grafico { display: grid; gap: 6px; justify-items: center; margin-top: 4px; }
+.grafico svg { width: 100%; max-width: 360px; height: auto; display: block; }
+.grafico-titolo { font-weight: 600; font-size: 1rem; }
+.grafico figcaption { font-size: .85rem; color: var(--muted); text-align: center; max-width: 36rem; }
+
 
 /* ---- avviso "tieni il telefono in verticale" ----
    Compare solo sui telefoni (schermo touch, poco alto) girati in orizzontale e copre tutta la pagina.
@@ -2536,7 +2541,13 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       <h2 id="profilo-nome"></h2>
       <p id="profilo-descr"></p>
       <p id="profilo-dettagli"></p>
-      <p class="note">Questo profilo è solo un gioco basato sulle tue risposte di oggi: non è una valutazione psicologica.</p>
+      <!-- evoluzione dello stato d'animo nella storia che ha pesato di più (solo disegnata, non salvata) -->
+      <figure class="grafico" id="profilo-grafico" hidden style="margin:0">
+        <p class="grafico-titolo">La traiettoria del tuo mood</p>
+        <div id="profilo-svg"></div>
+        <figcaption id="profilo-didascalia"></figcaption>
+      </figure>
+      <p class="note">Questo profilo è solo un gioco basato sulle tue risposte di oggi alle storie: non è una valutazione psicologica e non usa nessuna risposta dei questionari.</p>
     </section>
     <!-- compare solo se, dopo alcuni tentativi, qualche risposta non è ancora arrivata al foglio -->
     <p class="note" id="invio-avviso" hidden>Alcune risposte non sono ancora state inviate: controlla la connessione e lascia aperta questa pagina ancora qualche istante.</p>
@@ -3315,8 +3326,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   //    vince la più forte, ma solo se supera 0,25.
   //  - REATTIVITÀ (3): di quanto cambiano in media valenza e arousal da una frase alla successiva
   //    della stessa storia (bassa < 0,5, alta > 1, media in mezzo).
-  //  - in più: il tipo di storia che ha mosso di più la persona (escursione della valenza dentro la
-  //    storia) e come è tornato lo stato d'animo dopo le pause rispetto a quello iniziale.
+  //  - in più: come è tornato lo stato d'animo dopo le pause rispetto a quello iniziale.
   const PROFILI = {
     equilibrato: [
       ["Il Lago Calmo", "Hai attraversato le storie con passo tranquillo: le emozioni ti hanno sfiorato senza scuoterti, come il vento sulla superficie di un lago."],
@@ -3375,25 +3385,106 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     const reatt = media(salti);
     const livello = reatt < 0.5 ? 0 : reatt > 1 ? 2 : 1;
     const [nome, descr] = PROFILI[stile][livello];
-    // la storia che ha mosso di più: massima escursione della valenza dentro la storia
-    let gruppoTop = null, escTop = -1;
-    const perStoria = {};
-    R.forEach(r => { (perStoria[r.ordine] = perStoria[r.ordine] || []).push(r); });
-    Object.values(perStoria).forEach(rs => {
-      const v = rs.map(r => r.valenza), esc = Math.max(...v) - Math.min(...v);
-      if (esc > escTop && rs[0].gruppo) { escTop = esc; gruppoTop = rs[0].gruppo; }
-    });
     // recupero dopo le pause: distanza media della valenza dopo la pausa da quella iniziale
     const U = sessione.umore || [], u0 = U.find(u => u.momento === "inizio");
     const dopo = U.filter(u => u.momento !== "inizio");
     const scarto = u0 && dopo.length ? media(dopo.map(u => Math.abs(u.valenza - u0.valenza))) : null;
     const dettagli = [];
-    if (gruppoTop && escTop > 0 && NOMI_GRUPPI[gruppoTop])
-      dettagli.push("A muoverti di più sono state " + NOMI_GRUPPI[gruppoTop] + ".");
     if (scarto != null)
       dettagli.push(scarto <= 0.5 ? "Dopo ogni pausa il tuo stato d'animo è tornato rapidamente vicino a quello di partenza."
                                   : "Le storie ti hanno accompagnato anche durante le pause: il tuo stato d'animo non è sempre tornato a quello di partenza.");
-    return { nome, descr, dettagli: dettagli.join(" ") };
+    return { nome, descr, dettagli: dettagli.join(" "), stile };
+  }
+
+  // ---------- grafico dell'evoluzione dello stato d'animo (schermata finale) ----------
+  // Come nella figura "best story" del paper di Pardini: piano valenza (x) – arousal (y), traiettoria
+  // frase per frase (linea che sfuma dal chiaro allo scuro), punto di partenza (○ = stato d'animo prima
+  // della storia) e di arrivo (★ = ultima frase), ellissi a 1 e 2 deviazioni standard dei voti.
+  // Tutti i voti sono riportati tra 0 e 1: valenza (v + 2) / 4, arousal (a − 1) / 4.
+  // Il grafico è solo disegnato sullo schermo: niente viene salvato o inviato.
+  const norm = { v: v => (v + 2) / 4, a: a => (a - 1) / 4 };
+  const GRUPPO_SING = {
+    1: "una storia dal tono costante", 2: "una storia che va verso il peggio",
+    3: "una storia di riscatto, dal basso verso l'alto", 4: "una storia con una caduta e una risalita",
+    5: "una storia con un'ascesa e poi una caduta", 6: "una storia con più svolte"
+  };
+  // storia che ha pesato di più sul profilo: la più spostata nella direzione dello stile
+  // (per "equilibrato": quella con i voti più mossi da una frase all'altra)
+  function storiaPiuPesante(stile) {
+    const perStoria = {};
+    (sessione.risposte || []).forEach(r => { (perStoria[r.ordine] = perStoria[r.ordine] || []).push(r); });
+    const punteggio = rs => {
+      if (stile === "ottimista") return media(rs.map(r => r.valenza));
+      if (stile === "profondo") return -media(rs.map(r => r.valenza));
+      if (stile === "intenso") return media(rs.map(r => r.arousal));
+      if (stile === "timoniere") return media(rs.map(r => r.dominanza));
+      const s = []; for (let i = 1; i < rs.length; i++) s.push((Math.abs(rs[i].valenza - rs[i - 1].valenza) + Math.abs(rs[i].arousal - rs[i - 1].arousal)) / 2);
+      return media(s);
+    };
+    let migliore = null, max = -Infinity;
+    for (const [ordine, rs] of Object.entries(perStoria)) { const p = punteggio(rs); if (p > max) { max = p; migliore = Number(ordine); } }
+    return migliore;
+  }
+  function graficoStoria(ordine) {
+    const rs = (sessione.risposte || []).filter(r => r.ordine === ordine).sort((x, y) => x.n_frase - y.n_frase);
+    if (!rs.length) return null;
+    // un punto per ogni frase della storia, nell'ordine (○ prima frase, ★ ultima frase)
+    const punti = rs.map(r => [norm.v(r.valenza), norm.a(r.arousal)]);
+    // area del grafico: 250 × 250 px dentro un riquadro 320 × 320 (margini per assi e scritte)
+    // margini più larghi a sinistra e in basso per le figure SAM agli estremi degli assi
+    const X0 = 84, Y0 = 22, L = 250, px = v => X0 + v * L, py = a => Y0 + (1 - a) * L;
+    const f = n => n.toFixed(1);
+    let s = '<svg viewBox="0 0 364 352" role="img" aria-label="Evoluzione di valenza e arousal nella storia">' +
+            // le ellissi vengono tagliate ai bordi del riquadro 0–1
+            '<defs><clipPath id="area-grafico"><rect x="' + X0 + '" y="' + Y0 + '" width="' + L + '" height="' + L + '"/></clipPath></defs>';
+    // griglia e assi (0, 0,25, 0,5, 0,75, 1), linee centrali tratteggiate a 0,5
+    for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+      s += '<line x1="' + f(px(t)) + '" y1="' + Y0 + '" x2="' + f(px(t)) + '" y2="' + (Y0 + L) + '" stroke="var(--line)" stroke-width="1"' + (t === 0.5 ? ' stroke-dasharray="3 3" stroke="var(--muted)"' : '') + '/>';
+      s += '<line x1="' + X0 + '" y1="' + f(py(t)) + '" x2="' + (X0 + L) + '" y2="' + f(py(t)) + '" stroke="var(--line)" stroke-width="1"' + (t === 0.5 ? ' stroke-dasharray="3 3" stroke="var(--muted)"' : '') + '/>';
+      s += '<text x="' + f(px(t)) + '" y="' + (Y0 + L + 14) + '" font-size="10" text-anchor="middle" fill="var(--muted)">' + String(t).replace(".", ",") + '</text>';
+      s += '<text x="' + (X0 - 6) + '" y="' + f(py(t) + 3) + '" font-size="10" text-anchor="end" fill="var(--muted)">' + String(t).replace(".", ",") + '</text>';
+    }
+    s += '<rect x="' + X0 + '" y="' + Y0 + '" width="' + L + '" height="' + L + '" fill="none" stroke="var(--muted)" stroke-width="1"/>';
+    s += '<text x="' + (X0 + L / 2) + '" y="' + (Y0 + L + 46) + '" font-size="12" text-anchor="middle" fill="var(--fg)">Valenza</text>';
+    s += '<text x="22" y="' + (Y0 + L / 2) + '" font-size="12" text-anchor="middle" fill="var(--fg)" transform="rotate(-90 22 ' + (Y0 + L / 2) + ')">Arousal</text>';
+    // figure SAM agli estremi degli assi: valenza minima (0, sinistra) e massima (1, destra) sotto l'asse
+    // orizzontale; arousal minimo (0, in basso) e massimo (1, in alto) a sinistra dell'asse verticale.
+    // Le figure sono le stesse delle scale di voto, usate come "maschera" e colorate col colore del testo,
+    // così seguono il tema chiaro/scuro. Riquadro come nella tavola SAM originale.
+    const FW = 34, FH = 39;                            // proporzioni della figura SAM (117 × 133)
+    const figura = (dim, pos, cx, cy, id) => {
+      const x = cx - FW / 2, y = cy - FH / 2;
+      return '<mask id="' + id + '" style="mask-type:alpha"><image href="' + SAM_IMG[dim][pos - 1] + '" x="' + f(x) + '" y="' + f(y) + '" width="' + FW + '" height="' + FH + '" preserveAspectRatio="xMidYMid meet"/></mask>' +
+             '<rect x="' + f(x) + '" y="' + f(y) + '" width="' + FW + '" height="' + FH + '" fill="var(--fg)" mask="url(#' + id + ')"/>' +
+             '<rect x="' + f(x) + '" y="' + f(y) + '" width="' + FW + '" height="' + FH + '" fill="none" stroke="var(--muted)" stroke-width="1"/>';
+    };
+    const yFig = Y0 + L + 44;                          // riga delle figure della valenza (accanto alla scritta)
+    s += figura("valenza", 1, px(0), yFig - 4, "sam-v-min") + figura("valenza", 5, px(1), yFig - 4, "sam-v-max");
+    s += figura("arousal", 1, 50, py(0) - 4, "sam-a-min") + figura("arousal", 5, 50, py(1) + 6, "sam-a-max");
+    // posizione disegnata di ogni punto: i voti sono discreti e spesso due frasi hanno gli stessi
+    // valori; i punti uguali vengono disegnati leggermente spostati (a raggiera) così si vedono tutti.
+    // È solo un aiuto visivo: i valori restano quelli dei voti.
+    const visti = {}, P = punti.map(p => {
+      const k = p.join(","), n = (visti[k] = (visti[k] || 0) + 1) - 1;
+      const ang = n * 2.4, r = n ? 6 + 2 * Math.floor(n / 6) : 0;
+      return [px(p[0]) + r * Math.cos(ang), py(p[1]) + r * Math.sin(ang)];
+    });
+    // traiettoria: segmenti dal più chiaro (inizio) al più scuro (fine)
+    for (let i = 1; i < P.length; i++) {
+      const t = i / (P.length - 1);
+      s += '<line x1="' + f(P[i - 1][0]) + '" y1="' + f(P[i - 1][1]) + '" x2="' + f(P[i][0]) + '" y2="' + f(P[i][1]) +
+           '" stroke="var(--accent)" stroke-opacity="' + (0.3 + 0.7 * t).toFixed(2) + '" stroke-width="2.2" stroke-linecap="round"/>';
+    }
+    // un punto per ogni frase
+    for (let i = 0; i < P.length; i++)
+      s += '<circle cx="' + f(P[i][0]) + '" cy="' + f(P[i][1]) + '" r="3.2" fill="var(--accent)"/>';
+    // prima frase (○) e ultima frase (★)
+    s += '<circle cx="' + f(P[0][0]) + '" cy="' + f(P[0][1]) + '" r="6.5" fill="var(--surface)" stroke="var(--fg)" stroke-width="2"/>';
+    const cx = P[P.length - 1][0], cy = P[P.length - 1][1], stella = [];
+    for (let k = 0; k < 10; k++) { const r = k % 2 ? 4 : 10, ang = -Math.PI / 2 + k * Math.PI / 5; stella.push(f(cx + r * Math.cos(ang)) + "," + f(cy + r * Math.sin(ang))); }
+    s += '<polygon points="' + stella.join(" ") + '" fill="var(--warn)" stroke="var(--fg)" stroke-width="1"/>';
+    s += '</svg>';
+    return { svg: s, n: rs.length };
   }
 
   function mostraProfilo() {
@@ -3403,6 +3494,13 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     $("profilo-descr").textContent = p.descr;
     $("profilo-dettagli").textContent = p.dettagli;
     $("profilo").hidden = false;
+    // grafico: traiettoria del mood nella storia scelta da storiaPiuPesante (non viene detto quale)
+    const ordine = storiaPiuPesante(p.stile), g = ordine != null && graficoStoria(ordine);
+    if (g) {
+      $("profilo-svg").innerHTML = g.svg;
+      $("profilo-didascalia").textContent = "○ prima frase · ★ ultima frase · un punto per ogni frase (" + g.n + ") · valenza e arousal da 0 a 1";
+      $("profilo-grafico").hidden = false;
+    }
   }
 
   async function concludi() {

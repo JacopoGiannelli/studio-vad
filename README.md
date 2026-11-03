@@ -55,6 +55,24 @@ storie totali) compare solo nella schermata della pausa.
 Parametri modificabili in cima allo script di `index.html`: `PER_GRUPPO`, `PAUSA_S`,
 `APPS_SCRIPT_URL`, `FRASE_PROVA`.
 
+## Profilo di lettura (schermata finale)
+
+Come piccolo riconoscimento, la schermata finale mostra uno di **15 profili di lettura**
+(es. "Il Lago Calmo", "Il Surfista"), calcolato **solo dai voti sulle storie e dallo stato
+d'animo, mai dai questionari**, e dichiarato come gioco, non come valutazione psicologica:
+- **stile** (5): tendenza più forte tra valenza media alta (ottimista), bassa (profondo), arousal
+  alto (intenso), dominanza alta (timoniere), altrimenti equilibrato (soglia 0,25 su scala −1…+1);
+- **reattività** (3): cambiamento medio di valenza e arousal tra frasi consecutive (< 0,5 bassa,
+  > 1 alta);
+- in più: il ritorno dello stato d'animo dopo le pause rispetto a quello iniziale.
+Sotto il profilo c'è il grafico **"La traiettoria del tuo mood"** (piano valenza–arousal, come
+nel paper di Pardini) di una delle storie lette (quella più spostata nella direzione dello stile;
+quale sia non viene detto): **un punto per ogni frase** della storia (○ prima frase, ★ ultima),
+uniti nell'ordine, senza ellissi, valori riportati tra 0 e 1 (valenza (v+2)/4, arousal (a−1)/4).
+I punti con gli stessi valori sono disegnati leggermente spostati, così si vedono tutti.
+Profilo e grafico sono solo mostrati: non vengono salvati nel foglio. Nomi e testi sono
+nell'oggetto `PROFILI` dello script.
+
 ## Questionari
 
 I testi (istruzioni, etichette delle risposte, item) stanno nel blocco
