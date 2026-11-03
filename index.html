@@ -200,6 +200,11 @@ body.voto .scale .poles { font-size: .72rem; }
 body.voto .info { width: 1.4rem; height: 1.4rem; }
 .scale .sam-box { max-width: var(--sam-w, 72px); }
 .scale .sam.sam-dom { max-width: var(--sam-dom-w, 80px); }
+/* profilo di lettura nella schermata finale */
+.profilo { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+           border-radius: 12px; padding: 18px 20px; display: grid; gap: 10px; }
+.profilo h2 { font-size: 1.5rem; }
+
 /* ---- avviso "tieni il telefono in verticale" ----
    Compare solo sui telefoni (schermo touch, poco alto) girati in orizzontale e copre tutta la pagina.
    La stessa condizione è usata dallo script (ORIZZONTALE) per fermare il cronometro. */
@@ -2525,6 +2530,14 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       <h1>Grazie per la partecipazione</h1>
       <p class="lead">Hai completato lo studio. Grazie per il tempo che ci hai dedicato: le tue risposte sono anonime.</p>
     </header>
+    <!-- profilo di lettura: calcolato dai voti sulle storie (vedi mostraProfilo nello script) -->
+    <section class="profilo" id="profilo" hidden aria-labelledby="profilo-nome">
+      <p class="eyebrow">Come hai vissuto le storie</p>
+      <h2 id="profilo-nome"></h2>
+      <p id="profilo-descr"></p>
+      <p id="profilo-dettagli"></p>
+      <p class="note">Questo profilo è solo un gioco basato sulle tue risposte di oggi: non è una valutazione psicologica.</p>
+    </section>
     <!-- compare solo se, dopo alcuni tentativi, qualche risposta non è ancora arrivata al foglio -->
     <p class="note" id="invio-avviso" hidden>Alcune risposte non sono ancora state inviate: controlla la connessione e lascia aperta questa pagina ancora qualche istante.</p>
   </div>
@@ -3293,6 +3306,105 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   // appena torna la connessione si riprova subito
   window.addEventListener("online", () => { if (fase_ === "fine") tentaSalvataggio(); });
 
+  // ---------- profilo di lettura (schermata finale) ----------
+  // Un piccolo riconoscimento per chi ha completato lo studio, calcolato SOLO dai voti sulle storie
+  // e dallo stato d'animo, MAI dai questionari. È un gioco, non una valutazione psicologica.
+  //  - STILE (5): cosa prevale nei voti sulle frasi. Valenza media alta → ottimista, bassa → profondo,
+  //    arousal medio alto → intenso, dominanza media alta → timoniere; se nessuno prevale → equilibrato.
+  //    Ogni tendenza è uno scarto dal centro della scala diviso per la metà della scala (da −1 a +1):
+  //    vince la più forte, ma solo se supera 0,25.
+  //  - REATTIVITÀ (3): di quanto cambiano in media valenza e arousal da una frase alla successiva
+  //    della stessa storia (bassa < 0,5, alta > 1, media in mezzo).
+  //  - in più: il tipo di storia che ha mosso di più la persona (escursione della valenza dentro la
+  //    storia) e come è tornato lo stato d'animo dopo le pause rispetto a quello iniziale.
+  const PROFILI = {
+    equilibrato: [
+      ["Il Lago Calmo", "Hai attraversato le storie con passo tranquillo: le emozioni ti hanno sfiorato senza scuoterti, come il vento sulla superficie di un lago."],
+      ["L'Osservatore Attento", "Hai seguito le storie con attenzione e misura: ti sei lasciato toccare dai momenti importanti senza perdere il tuo equilibrio."],
+      ["Il Funambolo", "Le storie ti hanno fatto oscillare da un lato all'altro, ma sei sempre rimasto in equilibrio sul filo: un viaggio vivace e ben bilanciato."]
+    ],
+    ottimista: [
+      ["Il Raggio di Sole", "Anche nelle storie più grigie hai mantenuto una luce costante: il tuo sguardo tende con naturalezza al lato buono delle cose."],
+      ["Il Cercatore di Luce", "Hai vissuto gli alti e i bassi delle storie, ma sei sempre tornato a cercare il lato luminoso di ciò che leggevi."],
+      ["L'Entusiasta", "Ti sei lasciato trascinare dalle storie con energia: ogni svolta positiva ti ha acceso, e le hai vissute con slancio."]
+    ],
+    profondo: [
+      ["Il Pensatore Silenzioso", "Hai accolto anche le storie più difficili con calma e profondità: lasci che le cose ti tocchino davvero, senza farti travolgere."],
+      ["L'Anima Sensibile", "Le storie difficili ti hanno raggiunto, e lo hai lasciato accadere: una lettura sincera, che prende sul serio ciò che racconta."],
+      ["Il Navigatore delle Profondità", "Hai seguito le storie fin nei loro passaggi più intensi e scuri: un lettore che non ha paura di immergersi."]
+    ],
+    intenso: [
+      ["Il Vulcano Quieto", "Sotto una superficie calma le storie ti hanno tenuto acceso: una partecipazione intensa e costante."],
+      ["Lo Spettatore Vibrante", "Hai vissuto le storie con il cuore che batteva: ogni frase importante ti ha coinvolto da vicino."],
+      ["Le Montagne Russe", "Salite, discese e curve improvvise: hai vissuto le storie come un giro sulle montagne russe, con tutta l'adrenalina del caso."]
+    ],
+    timoniere: [
+      ["Il Faro", "Qualunque cosa succedesse nelle storie sei rimasto saldo al tuo posto, come un faro che illumina senza muoversi."],
+      ["Il Timoniere", "Hai lasciato che le storie ti portassero, ma tenendo sempre la rotta: coinvolto, eppure padrone di ciò che provavi."],
+      ["Il Surfista", "Le storie erano onde, a volte alte: le hai cavalcate tutte, restando in piedi sulla tavola."]
+    ]
+  };
+  const NOMI_GRUPPI = {
+    1: "le storie dal tono costante",
+    2: "le storie che vanno verso il peggio",
+    3: "le storie di riscatto, dal basso verso l'alto",
+    4: "le storie con una caduta e una risalita",
+    5: "le storie con un'ascesa e poi una caduta",
+    6: "le storie con più svolte"
+  };
+  const media = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
+
+  function calcolaProfilo() {
+    const R = sessione.risposte || [];
+    if (!R.length) return null;
+    // stile: tendenza più forte (da −1 a +1) tra valenza (−2…+2), arousal e dominanza (1…5)
+    const tendenze = {
+      ottimista: media(R.map(r => r.valenza)) / 2,
+      profondo: -media(R.map(r => r.valenza)) / 2,
+      intenso: (media(R.map(r => r.arousal)) - 3) / 2,
+      timoniere: (media(R.map(r => r.dominanza)) - 3) / 2
+    };
+    let stile = "equilibrato", max = 0.25;
+    for (const [k, v] of Object.entries(tendenze)) if (v > max) { stile = k; max = v; }
+    // reattività: cambiamento medio di valenza e arousal tra frasi consecutive della stessa storia
+    const salti = [];
+    for (let i = 1; i < R.length; i++) {
+      if (R[i].ordine !== R[i - 1].ordine) continue;
+      salti.push((Math.abs(R[i].valenza - R[i - 1].valenza) + Math.abs(R[i].arousal - R[i - 1].arousal)) / 2);
+    }
+    const reatt = media(salti);
+    const livello = reatt < 0.5 ? 0 : reatt > 1 ? 2 : 1;
+    const [nome, descr] = PROFILI[stile][livello];
+    // la storia che ha mosso di più: massima escursione della valenza dentro la storia
+    let gruppoTop = null, escTop = -1;
+    const perStoria = {};
+    R.forEach(r => { (perStoria[r.ordine] = perStoria[r.ordine] || []).push(r); });
+    Object.values(perStoria).forEach(rs => {
+      const v = rs.map(r => r.valenza), esc = Math.max(...v) - Math.min(...v);
+      if (esc > escTop && rs[0].gruppo) { escTop = esc; gruppoTop = rs[0].gruppo; }
+    });
+    // recupero dopo le pause: distanza media della valenza dopo la pausa da quella iniziale
+    const U = sessione.umore || [], u0 = U.find(u => u.momento === "inizio");
+    const dopo = U.filter(u => u.momento !== "inizio");
+    const scarto = u0 && dopo.length ? media(dopo.map(u => Math.abs(u.valenza - u0.valenza))) : null;
+    const dettagli = [];
+    if (gruppoTop && escTop > 0 && NOMI_GRUPPI[gruppoTop])
+      dettagli.push("A muoverti di più sono state " + NOMI_GRUPPI[gruppoTop] + ".");
+    if (scarto != null)
+      dettagli.push(scarto <= 0.5 ? "Dopo ogni pausa il tuo stato d'animo è tornato rapidamente vicino a quello di partenza."
+                                  : "Le storie ti hanno accompagnato anche durante le pause: il tuo stato d'animo non è sempre tornato a quello di partenza.");
+    return { nome, descr, dettagli: dettagli.join(" ") };
+  }
+
+  function mostraProfilo() {
+    const p = calcolaProfilo();
+    if (!p) return;
+    $("profilo-nome").textContent = p.nome;
+    $("profilo-descr").textContent = p.descr;
+    $("profilo-dettagli").textContent = p.dettagli;
+    $("profilo").hidden = false;
+  }
+
   async function concludi() {
     sessione.fine = new Date().toISOString();
     $("p-bar").style.width = "100%";
@@ -3302,6 +3414,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     accodaLotto([], [], [{ pagina: "totale_web_app", tentativo: 1, inizio: t0, fine: sessione.fine,
                            durata_ms: Date.parse(sessione.fine) - Date.parse(t0), pagina_nascosta: "" }]);
     show("s-end");
+    mostraProfilo();
     tentaSalvataggio();
   }
 
@@ -3334,7 +3447,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     const n = sessione.storie.length;
     if (st.fase === "questionari") { if (statoQ().qidx < QUEST.length) mostraQuestionario(); else fineQuestionari(); }
     else if (st.fase === "dopo_questionari") fineQuestionari();
-    else if (st.fase === "fine") { show("s-end"); tentaSalvataggio(); }
+    else if (st.fase === "fine") { show("s-end"); mostraProfilo(); tentaSalvataggio(); }
     else if (st.fase === "pausa") avviaPausa();      // la pausa riparte da capo (20 s)
     else if (st.fase === "frase" && idx < n) { show("s-story"); renderFrase(); }
     else iniziaUmore();                              // stato d'animo da dare (inizio, dopo pausa o fine)
