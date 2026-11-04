@@ -119,7 +119,7 @@ ol.steps { margin: 0; padding-left: 1.3rem; display: grid; gap: 6px; }
 .scale { position: relative; }
 .scale .tip { position: absolute; left: 0; right: 0; top: 2rem; z-index: 20; box-shadow: 0 8px 24px rgba(0, 0, 0, .28); }
 /* scala già votata: bloccata finché non compare la domanda successiva (niente ripensamenti) */
-.scale:disabled label { cursor: default; }
+.scale:disabled label, .scale.bloccata label { cursor: default; pointer-events: none; }
 /* Questionari: una pagina per questionario, ogni item con la sua riga di risposte */
 ol.q-item { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: qi; }
 .q-riga { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; counter-increment: qi; }
@@ -136,7 +136,7 @@ ol.q-item { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; c
 .q-opts input:focus-visible + label { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 
-.scale:disabled input:checked + label { color: var(--c); }
+.scale:disabled input:checked + label, .scale.bloccata input:checked + label { color: var(--c); }
 .scale .opts { display: grid; grid-template-columns: repeat(5, 1fr); gap: clamp(10px, 3.5vw, 22px); }
 .scale input { position: absolute; opacity: 0; pointer-events: none; }
 .scale label { display: grid; justify-items: center; align-content: end; gap: 2px; padding: 3px 1px 3px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg); font: 600 .8rem var(--font-mono); cursor: pointer; user-select: none; transition: background .15s, border-color .15s, color .15s; }
@@ -2396,6 +2396,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
 
     <div class="row" id="riga-inizia">
       <button class="btn" id="b-start" type="button">Compila i questionari</button>
+      <button class="btn" id="b-debug" type="button" hidden style="background:var(--warn);border-color:var(--warn)">DEBUG · salta ai test</button>
       <span class="note" id="pool-info"></span>
     </div>
 
@@ -2844,7 +2845,8 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
 
   // mostra insieme le scale della schermata, tutte sbloccate
   function mostraScale() {
-    SCALE.forEach(f => { f.hidden = !attive.includes(f); f.disabled = false; });
+    SCALE.forEach(f => { f.hidden = !attive.includes(f); f.disabled = false; f.classList.remove("bloccata"); });
+    for (const d of DIMENSIONI) delete votoBloccato[d];
     chiudiInfo();
     inAvanzamento = false;
     adattaSchermo();                                   // frase + tre scale nell'altezza dello schermo
@@ -2853,10 +2855,41 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   // Scelta di una figura: si registra il tempo del voto e la sua posizione nell'ordine, la scala
   // si BLOCCA (fieldset disabilitato: altri tocchi non hanno effetto). Quando tutte le scale della
   // schermata hanno un voto, dopo un attimo si registra la risposta. Non si può tornare indietro.
+  // Il blocco NON dipende solo dal fieldset disabilitato (su alcuni telefoni un tocco su un'altra figura
+  // riusciva comunque a cambiare il voto): si ricorda l'input votato per ogni scala, e
+  //  - ogni tocco sulle figure di una scala già votata viene annullato (fase di cattura, prima di tutto);
+  //  - se il browser cambia comunque la selezione, viene rimessa quella del primo voto.
+  const votoBloccato = {};   // scala → input scelto per primo
+  const scalaDi = el => el && el.closest ? el.closest("fieldset.scale") : null;
+  const dimDi = fs => fs.querySelector(".opts").dataset.name;
+  function bloccaTocco(e) {
+    const fs = scalaDi(e.target);
+    if (fs && votoBloccato[dimDi(fs)]) { e.preventDefault(); e.stopPropagation(); }
+  }
+  ["click", "pointerdown", "mousedown", "touchstart"].forEach(t => form.addEventListener(t, e => {
+    if (t === "touchstart" || t === "pointerdown" || t === "mousedown") {
+      // su questi eventi si blocca solo la propagazione: preventDefault qui impedirebbe lo scorrimento
+      const fs = scalaDi(e.target);
+      if (fs && votoBloccato[dimDi(fs)]) e.stopPropagation();
+      return;
+    }
+    bloccaTocco(e);
+  }, true));
+  form.addEventListener("keydown", e => {   // anche da tastiera (frecce) una scala votata non cambia
+    const fs = scalaDi(e.target);
+    if (fs && votoBloccato[dimDi(fs)]) e.preventDefault();
+  }, true);
   form.addEventListener("change", e => {
-    const fs = e.target.closest("fieldset.scale");
-    if (!fs || fs.disabled || !attive.includes(fs) || inAvanzamento) return;
-    const dim = fs.querySelector(".opts").dataset.name;
+    const fs = scalaDi(e.target);
+    if (!fs || !attive.includes(fs)) return;
+    const dim = dimDi(fs);
+    if (votoBloccato[dim]) {                          // scala già votata: si rimette il primo voto
+      if (!votoBloccato[dim].checked) votoBloccato[dim].checked = true;
+      return;
+    }
+    if (fs.disabled || inAvanzamento) return;
+    votoBloccato[dim] = e.target;
+    fs.classList.add("bloccata");
     if (misura && misura.rt[dim] == null) {
       const t = tempoSchermata();
       misura.rt[dim] = Math.round(t - misura.ultimo);
@@ -3215,6 +3248,23 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     inizioPagina("intro", T_APERTURA);
     finePagina("intro");
   });
+  // DEBUG (solo con ?debug alla fine dell'indirizzo): salta i questionari e va direttamente alla pagina
+  // "Come funziona lo studio", così si può provare la parte dell'esperimento senza compilarli ogni volta.
+  // Attenzione: i dati di questa sessione di prova arrivano comunque nel foglio (senza i questionari).
+  if (DEBUG) {
+    const bd = $("b-debug");
+    bd.hidden = false;
+    bd.addEventListener("click", () => {
+      bloccaVerticale();
+      if (POOL.length === 0) { $("pool-info").textContent = "Nessuna storia caricata nel dataset."; return; }
+      sessione.inizio = new Date().toISOString();
+      coda = []; nLotto = 0; umoreInviato = 0;
+      sessione.apertura = T_APERTURA;
+      inizioPagina("intro", T_APERTURA);
+      finePagina("intro");
+      fineQuestionari();                                 // → pagina "Come funziona lo studio"
+    });
+  }
   $("b-inizia").addEventListener("click", () => { bloccaVerticale(); finePagina("spiegazione"); avviaProva(); });
   $("b-prova-rifai").addEventListener("click", () => { finePagina("riscontro_prova"); avviaProva(); });
 
