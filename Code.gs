@@ -24,6 +24,8 @@
  *    ogni partecipante, con la somma dei tempi di voto (vedi sotto).
  *
  * Per ogni frase e ogni stato d'animo arrivano anche le misure di risposta:
+ *  - ts_valenza, ts_arousal, ts_dominanza: istante ESATTO (data e ora UTC al millisecondo) in cui la
+ *    persona ha toccato ciascun omino (le tre scale sono nella stessa pagina);
  *  - rt_valenza_ms, rt_arousal_ms, rt_dominanza_ms: tempo di ciascun voto. Le tre scale sono
  *    sullo schermo insieme: il tempo di un voto va dal voto precedente (o dalla comparsa della
  *    schermata, per il primo) al tocco della figura; la somma dei tre è il tempo della schermata.
@@ -75,12 +77,15 @@ const ID_FOGLIO = "1U8CVtfzR4GjcmlcbJHwFXN7Y4bg2x3LxaGHLHW4wMUE";
 // Misure di risposta (stessi nomi usati dalla web app): numeri, più l'ordine dei voti (testo)
 const COLONNE_MISURE = ["rt_valenza_ms", "rt_arousal_ms", "rt_dominanza_ms", "n_info", "pagina_nascosta"];
 const COLONNA_ORDINE = "ordine_voti";
+// Momento ESATTO del tocco su ogni omino. La web app lo manda in UTC (es. 2026-11-03T14:35:07.412Z);
+// qui viene convertito in ORA ITALIANA (es. 2026-11-03 15:35:07.412), come tutti gli altri orari del foglio.
+const COLONNE_TS = ["ts_valenza", "ts_arousal", "ts_dominanza"];
 
 const NOME_FOGLIO = "risposte";
 const INTESTAZIONE = [
   "ricevuto", "sessione", "inizio", "fine", "ordine_storia", "id_storia", "gruppo", "tipo_storia",
   "n_frase", "frase", "valenza", "arousal", "dominanza"
-].concat(COLONNE_MISURE, [COLONNA_ORDINE, "user_agent", "versione", "immagine"]);
+].concat(COLONNE_MISURE, [COLONNA_ORDINE], COLONNE_TS, ["user_agent", "versione", "immagine"]);
 
 // Registro dei lotti già scritti (serve a scartare gli invii doppi)
 const NOME_FOGLIO_LOTTI = "lotti";
@@ -91,7 +96,7 @@ const NOME_FOGLIO_UMORE = "umore";
 const INTESTAZIONE_UMORE = [
   "ricevuto", "sessione", "momento", "ordine_storia", "id_storia_precedente",
   "id_storia_successiva", "pausa_s", "valenza", "arousal", "dominanza"
-].concat(COLONNE_MISURE, [COLONNA_ORDINE, "user_agent", "versione"]);
+].concat(COLONNE_MISURE, [COLONNA_ORDINE], COLONNE_TS, ["user_agent", "versione"]);
 
 // Tempo totale per storia: una riga per (sessione, storia), aggiornata a ogni frase.
 // "chiave" = sessione|ordine_storia, serve allo script per ritrovare la riga da aggiornare.
@@ -177,6 +182,39 @@ function zero_(v) { const n = numero_(v); return n === "" ? 0 : n; }
 function misure_(r, colonne) {
   return (colonne || COLONNE_MISURE).map(function (k) { return numero_(r[k]); });
 }
+// i tre istanti dei tocchi (testo ISO, come "inizio" e "fine"); vuoti se la web app non li manda
+function istanti_(r) {
+  return COLONNE_TS.map(function (k) { return ora_(r && r[k]); });
+}
+// Istante ISO (UTC, come lo manda la web app) → ora italiana "2026-11-03 15:35:07.412" (gestisce da sola ora legale/solare).
+// Se il testo non è una data valida resta com'è.
+function ora_(iso) {
+  if (iso === undefined || iso === null || iso === "") return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return testo_(iso, 40);
+  return Utilities.formatDate(d, "Europe/Rome", "yyyy-MM-dd HH:mm:ss.SSS");
+}
+
+// ---------- formati delle celle ----------
+// Google Sheets prova a indovinare il formato: un numero scritto sotto una colonna con le date
+// (es. "ricevuto") veniva mostrato come data (0 → 30/12/1899, i millisecondi → anni assurdi) e, rileggendolo,
+// lo script lo trovava come Date. Per questo il formato di ogni colonna è impostato SEMPRE in modo esplicito:
+//  - ricevuto / aggiornato → data e ora con i secondi
+//  - colonne numeriche → numero semplice (pausa_s con un decimale)
+//  - tutte le altre → testo (le stringhe ISO e gli id non vengono più trasformati in date o numeri)
+const FORMATO_DATAORA = "dd/MM/yyyy HH:mm:ss";
+const RE_NUMERICHE = /^(ordine_storia|gruppo|tipo_storia|n_frase|valenza|arousal|dominanza|rt_.*_ms|n_info|pagina_nascosta|durata_ms|tentativo|n_item|n_frasi_votate|tempo_.*_ms|righe|righe_umore|item_.*)$/;
+function formatoColonna_(nome) {
+  if (nome === "ricevuto" || nome === "aggiornato") return FORMATO_DATAORA;
+  if (nome === "pausa_s") return "0.0";
+  if (RE_NUMERICHE.test(nome)) return "0";
+  return "@";
+}
+// imposta i formati su nrighe righe a partire da "riga", secondo i nomi delle colonne (intestazione)
+function formati_(sh, riga, nrighe, intestazione) {
+  const f = intestazione.map(formatoColonna_);
+  sh.getRange(riga, 1, nrighe, f.length).setNumberFormats(Array.from({ length: nrighe }, function () { return f; }));
+}
 
 // Testo "pulito": tronca i campi lunghi ed evita che una cella venga
 // interpretata come formula (=, +, -, @ all'inizio).
@@ -188,7 +226,11 @@ function testo_(s, max) {
 
 // Scrive tutte le righe con una sola operazione: più veloce di tanti appendRow.
 function scrivi_(sh, righe, ncol) {
-  if (righe.length) sh.getRange(sh.getLastRow() + 1, 1, righe.length, ncol).setValues(righe);
+  if (!righe.length) return;
+  const riga = sh.getLastRow() + 1;
+  const testa = sh.getRange(1, 1, 1, ncol).getValues()[0].map(String);
+  formati_(sh, riga, righe.length, testa);           // prima i formati, poi i valori
+  sh.getRange(riga, 1, righe.length, ncol).setValues(righe);
 }
 
 // ---------- tempo per storia ----------
@@ -219,6 +261,7 @@ function aggiornaTempoStoria_(sh, ora, sessione, ordine, agg) {
   metti("tempo_frasi_ms", v("tempo_frasi_ms") + (agg.frasi_ms || 0));
   metti("tempo_storia_ms", v("tempo_umore_prima_ms") + v("tempo_frasi_ms"));
   metti("aggiornato", ora);
+  formati_(sh, riga, 1, INTESTAZIONE_TEMPI);
   sh.getRange(riga, 1, 1, INTESTAZIONE_TEMPI.length).setValues([valori]);
 }
 
@@ -255,7 +298,9 @@ function scriviVoti_(ora, sessione, nome, item) {
   riga[testa.indexOf("ricevuto")] = ora;
   riga[testa.indexOf("sessione")] = sessione;
   item.forEach(function (x) { riga[testa.indexOf("item_" + x.item)] = x.risposta; });
-  sh.getRange(sh.getLastRow() + 1, 1, 1, testa.length).setValues([riga]);
+  const r = sh.getLastRow() + 1;
+  formati_(sh, r, 1, testa);
+  sh.getRange(r, 1, 1, testa.length).setValues([riga]);
 }
 
 // Durata della compilazione: quella misurata dalla web app, altrimenti fine − inizio.
@@ -299,8 +344,8 @@ function doPost(e) {
       return [
         ora,
         sessione,
-        testo_(d.inizio, 40),
-        testo_(d.fine, 40),
+        ora_(d.inizio),
+        ora_(d.fine),
         Number(r.ordine) || "",
         testo_(r.id_storia, 100),
         numero_(r.gruppo),
@@ -311,7 +356,8 @@ function doPost(e) {
         scala5_(r.arousal),
         scala5_(r.dominanza)
       ].concat(misure_(r), [
-        testo_(r[COLONNA_ORDINE], 20),
+        testo_(r[COLONNA_ORDINE], 20)
+      ], istanti_(r), [
         testo_(d.user_agent, 300),
         testo_(d.versione || "testi", 20),
         testo_(r.immagine, 200)
@@ -330,7 +376,8 @@ function doPost(e) {
         scala5_(u.arousal),
         scala5Facoltativa_(u.dominanza)
       ].concat(misure_(u), [
-        testo_(u[COLONNA_ORDINE], 20),
+        testo_(u[COLONNA_ORDINE], 20)
+      ], istanti_(u), [
         testo_(d.user_agent, 300),
         testo_(d.versione || "testi", 20)
       ]);
@@ -340,15 +387,15 @@ function doPost(e) {
       const nome = testo_(q && q.questionario, 30);
       if (!nome) throw new Error("questionario senza nome");
       const item = itemQuestionario_(q.risposte);
-      righeQuest.push([ora, sessione, nome, testo_(q.inizio, 40), testo_(q.fine, 40), durataQuestionario_(q),
+      righeQuest.push([ora, sessione, nome, ora_(q.inizio), ora_(q.fine), durataQuestionario_(q),
                        item.length, testo_(d.user_agent, 300), testo_(d.versione || "testi", 20)]);
       votiQuest.push({ nome: nome, item: item });
     });
 
     // tempi delle pagine (durata: quella misurata dalla web app, altrimenti fine − inizio)
     const righePagine = pagine.map(function (p) {
-      return [ora, sessione, testo_(p && p.pagina, 40), numero_(p && p.tentativo), testo_(p && p.inizio, 40),
-              testo_(p && p.fine, 40), durataQuestionario_(p || {}), numero_(p && p.pagina_nascosta),
+      return [ora, sessione, testo_(p && p.pagina, 40), numero_(p && p.tentativo), ora_(p && p.inizio),
+              ora_(p && p.fine), durataQuestionario_(p || {}), numero_(p && p.pagina_nascosta),
               testo_(d.user_agent, 300), testo_(d.versione || "testi", 20)];
     });
 
@@ -382,7 +429,11 @@ function doPost(e) {
       });
     }
 
-    if (lotto) shLotti.appendRow([ora, lotto, sessione, righe.length, righeUmore.length]);
+    if (lotto) {
+      const rl = shLotti.getLastRow() + 1;
+      formati_(shLotti, rl, 1, INTESTAZIONE_LOTTI);
+      shLotti.getRange(rl, 1, 1, INTESTAZIONE_LOTTI.length).setValues([[ora, lotto, sessione, righe.length, righeUmore.length]]);
+    }
     return json_({ ok: true, righe: righe.length, righe_umore: righeUmore.length,
                    questionari: righeQuest.length, pagine: righePagine.length, codice: VERSIONE_CODICE });
   } catch (err) {

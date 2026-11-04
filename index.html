@@ -199,8 +199,8 @@ body.voto .story { padding: 12px 16px; font-size: var(--fs-frase, 1.15rem); line
 body.voto .story .frase-img { max-height: 28vh; margin-bottom: 8px; }
 body.voto .scales { gap: 8px; }
 /* più spazio alle figure: margini laterali e spazi tra le colonne più stretti (le figure sono limitate dalla larghezza della colonna) */
-body.voto main.wrap { padding-inline: 8px; }
-body.voto .scale .opts { gap: 6px; }
+body.voto main.wrap { padding-inline: 6px; }
+body.voto .scale .opts { gap: 3px; }
 body.voto .scale { gap: 2px; }
 body.voto .scale legend { font-size: .95rem; }
 body.voto .scale .poles { font-size: .72rem; }
@@ -2605,7 +2605,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     "Ultima domanda: come ti senti adesso?"
   ];
   // misure registrate per ogni frase e ogni stato d'animo, oltre ai voti (stesse colonne nel foglio)
-  const COLONNE_MISURE = ["rt_valenza_ms", "rt_arousal_ms", "rt_dominanza_ms", "n_info", "pagina_nascosta", "ordine_voti"];
+  const COLONNE_MISURE = ["rt_valenza_ms", "rt_arousal_ms", "rt_dominanza_ms", "n_info", "pagina_nascosta", "ordine_voti", "ts_valenza", "ts_arousal", "ts_dominanza"];
   // con ?debug alla fine dell'indirizzo compare in basso l'esito di ogni invio al foglio
   const DEBUG = /[?&]debug\b/.test(location.search);
 
@@ -2766,13 +2766,14 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     // attivo = ms accumulati con la schermata visibile; dal = istante in cui il cronometro è ripartito;
     // ultimo = tempo del voto precedente (da lì parte il tempo del voto successivo)
     misura = { n_info: 0, nascosta: inPausaSchermo() ? 1 : 0, attivo: 0, dal: inPausaSchermo() ? null : performance.now(),
-               ultimo: 0, ordine: [], rt: {} };
+               ultimo: 0, ordine: [], rt: {}, ts: {} };
   }
   function tempoSchermata() { return misura.attivo + (misura.dal != null ? performance.now() - misura.dal : 0); }
   const SIGLA = { valenza: "V", arousal: "A", dominanza: "D" };
   function campiMisura() {
     const o = {};
     for (const d of DIMENSIONI) o["rt_" + d + "_ms"] = misura.rt[d] == null ? "" : misura.rt[d];
+    for (const d of DIMENSIONI) o["ts_" + d] = misura.ts[d] || "";   // momento esatto del tocco su ogni omino
     o.n_info = misura.n_info; o.pagina_nascosta = misura.nascosta;
     o.ordine_voti = misura.ordine.map(d => SIGLA[d]).join("-");
     return o;
@@ -2861,6 +2862,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       misura.rt[dim] = Math.round(t - misura.ultimo);
       misura.ultimo = t;
       misura.ordine.push(dim);
+      misura.ts[dim] = new Date().toISOString();   // istante ESATTO del tocco sull'omino (UTC, al millisecondo)
     }
     fs.disabled = true;
     const v = valori();
