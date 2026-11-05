@@ -85,8 +85,8 @@ Se resta un segnaposto `[DA INSERIRE: …]`, sotto il pulsante iniziale compare 
 | questionario | item | risposte | stato dei testi | punteggi |
 |---|---|---|---|---|
 | PANAS | 20 | 1–5 | **provvisorio**: traduzione corretta da una versione brasiliana; da sostituire con la versione italiana validata (Terracciano et al., 2003) | PA = somma item dispari, NA = somma item pari (ordine attuale) |
-| STAI forma Y1 (stato) | 20 | 1–4 | inserito dal modulo italiano, **forma femminile** (da decidere: forme "o/a" o versione maschile) | item 1, 2, 5, 8, 10, 11, 15, 16, 19, 20 invertiti (5 − x), poi somma: 20–80 |
-| BSI-18 | 18 | 0–4 | **da sostituire**: ora è la versione **inglese** del modulo cartaceo; serve la versione italiana validata | SOM = 1, 4, 7, 10, 13, 16; DEP = 2, 5, 8, 11, 14, 17; ANX = 3, 6, 9, 12, 15, 18; GSI = somma dei 18 (0–72) |
+| STAI forma Y1 (stato) | 20 | 1–4 | inserito dal modulo italiano con le forme **"o/a"** (es. «Mi sento calmo/a»); istruzioni al **tu** | item 1, 2, 5, 8, 10, 11, 15, 16, 19, 20 invertiti (5 − x), poi somma: 20–80 |
+| BSI-18 | 18 | 0–4 | testo **italiano** inserito (istruzioni «Durante gli ultimi 7 giorni, quanto ha sofferto:», risposte Per nulla / Un pochino / Moderatamente / Abbastanza / Moltissimo); da controllare che coincida con la versione italiana validata, e nelle istruzioni c'è ancora la forma di cortesia («ha sofferto») mentre gli altri questionari sono al tu | SOM = 1, 4, 7, 10, 13, 16; DEP = 2, 5, 8, 11, 14, 17; ANX = 3, 6, 9, 12, 15, 18; GSI = somma dei 18 (0–72) |
 
 Per ogni questionario si salvano `inizio` (comparsa della pagina), `fine` (conferma con tutte
 le risposte date) e `durata_ms` (foglio `questionari`), e i voti item per item
