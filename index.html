@@ -130,7 +130,8 @@ ol.q-item { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; c
 .q-opts input { position: absolute; opacity: 0; pointer-events: none; }
 .q-opts label { display: grid; justify-items: center; gap: 2px; padding: 8px 1px; border: 1px solid var(--line); border-radius: 8px;
                 cursor: pointer; font: 600 .95rem var(--font-mono); text-align: center; user-select: none; }
-.q-opts label small { font: 400 .68rem/1.25 var(--font-ui); color: var(--muted); overflow-wrap: break-word; hyphens: manual;   /* va a capo solo nei punti segnati con \u00ad */ }
+.q-opts label { min-width: 0; overflow: hidden; }
+.q-opts label small { max-width: 100%; font: 400 .68rem/1.25 var(--font-ui); color: var(--muted); overflow-wrap: anywhere; hyphens: manual;   /* va a capo solo nei punti segnati con \u00ad */ }
 .q-opts input:checked + label { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
 .q-opts input:checked + label small { color: inherit; }
 .q-opts input:focus-visible + label { outline: 3px solid var(--accent); outline-offset: 2px; }
@@ -2517,7 +2518,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   // misure registrate per ogni frase e ogni stato d'animo, oltre ai voti (stesse colonne nel foglio)
   const COLONNE_MISURE = ["rt_valenza_ms", "rt_arousal_ms", "rt_dominanza_ms", "n_info", "pagina_nascosta", "ordine_voti", "ts_valenza", "ts_arousal", "ts_dominanza"];
   // con ?debug alla fine dell'indirizzo compare in basso l'esito di ogni invio al foglio
-  const DEBUG = /[?&]debug\b/.test(location.search);
+  const DEBUG = false;   // riquadro di controllo rimosso
 
   // ---------- telefono in verticale ----------
   // ORIZZONTALE: vero quando un telefono è girato in orizzontale (stessa condizione del CSS di #ruota).
@@ -3029,7 +3030,9 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
         lab.htmlFor = id;
         const et = q.etichette && q.etichette[j] ? q.etichette[j] : "";
         lab.innerHTML = '<span>' + v + '</span>' + (et ? '<small></small>' : "");
-        if (et) lab.querySelector("small").textContent = et;
+        // trattini morbidi: le parole lunghe vanno a capo dentro il pulsante invece di uscirne
+        if (et) lab.querySelector("small").textContent = et.replace("Moderatamente", "Modera­tamente")
+          .replace("Abbastanza", "Abba­stanza").replace("Moltissimo", "Moltis­simo");
         opts.append(inp, lab);
       });
       li.append(p, opts);
