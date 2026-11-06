@@ -1,9 +1,9 @@
 /**
  * Apps Script che riceve le risposte della web app VAD e le scrive nel Google Sheet.
- * Versione del codice: v9 (90 storie in 6 gruppi, DUE scale mostrate insieme: valenza e arousal,
+ * Versione del codice: v10 (90 storie in 6 gruppi, DUE scale (valenza e arousal) o TRE con la dominanza (versione "testi_dom"),
  * senza dominanza; voto modificabile finché non sono state date entrambe le risposte, con conteggio
  * e istanti dei cambi di voto; tempi per voto e ordine dei voti, tempo totale per storia,
- * questionari PANAS / STAI / BSI-18, tempo sulle pagine e tempo totale; lotti per storia, tempi_storie aggiornato una volta per lotto) – v9.
+ * questionari PANAS / STAI / BSI-18, tempo sulle pagine e tempo totale; lotti per storia, tempi_storie aggiornato una volta per lotto; colonne della dominanza in fondo a risposte e umore) – v10.
  *
  * Le risposte arrivano a "lotti": la web app invia una richiesta POST (JSON) subito dopo
  * ogni risposta, cioè dopo i due voti di ogni frase, dopo ogni stato d'animo e (quando la web app
@@ -72,7 +72,7 @@
  * Versione: Nuova versione → Distribuisci (l'URL /exec resta lo stesso).
  */
 
-const VERSIONE_CODICE = "v9";
+const VERSIONE_CODICE = "v10";
 
 // ID del Google Sheet "Risposte studio VAD" (la parte dell'indirizzo tra /d/ e /edit).
 // Serve se lo script NON è stato creato da Estensioni → Apps Script dentro il foglio:
@@ -88,12 +88,15 @@ const COLONNE_TS = ["ts_valenza", "ts_arousal"];
 // Cambi di voto della SOLA valenza: quante volte è stato cambiato (numero) e il momento di ognuno
 // in millisecondi dalla comparsa della schermata, come rt_*_ms (testo, separati da " ; ")
 const COLONNE_CAMBI = ["n_cambi_valenza", "t_cambi_valenza_ms"];
+// Dominanza (solo per la versione della web app con tre scale, "testi_dom"): colonne IN FONDO ai fogli
+// "risposte" e "umore", vuote per la versione con due scale. Il voto, il tempo del primo tocco e l'istante del tocco.
+const COLONNE_DOM = ["dominanza", "rt_dominanza_ms", "ts_dominanza"];
 
 const NOME_FOGLIO = "risposte";
 const INTESTAZIONE = [
   "ricevuto", "sessione", "inizio", "fine", "ordine_storia", "id_storia", "gruppo", "tipo_storia",
   "n_frase", "frase", "valenza", "arousal"
-].concat(COLONNE_MISURE, [COLONNA_ORDINE], COLONNE_TS, COLONNE_CAMBI, ["user_agent", "versione", "immagine"]);
+].concat(COLONNE_MISURE, [COLONNA_ORDINE], COLONNE_TS, COLONNE_CAMBI, ["user_agent", "versione", "immagine"], COLONNE_DOM);
 
 // Registro dei lotti già scritti (serve a scartare gli invii doppi)
 const NOME_FOGLIO_LOTTI = "lotti";
@@ -104,7 +107,7 @@ const NOME_FOGLIO_UMORE = "umore";
 const INTESTAZIONE_UMORE = [
   "ricevuto", "sessione", "momento", "ordine_storia", "id_storia_precedente",
   "id_storia_successiva", "pausa_s", "valenza", "arousal"
-].concat(COLONNE_MISURE, [COLONNA_ORDINE], COLONNE_TS, COLONNE_CAMBI, ["user_agent", "versione"]);
+].concat(COLONNE_MISURE, [COLONNA_ORDINE], COLONNE_TS, COLONNE_CAMBI, ["user_agent", "versione"], COLONNE_DOM);
 
 // Tempo totale per storia: una riga per (sessione, storia), aggiornata a ogni frase.
 // "chiave" = sessione|ordine_storia, serve allo script per ritrovare la riga da aggiornare.
@@ -143,6 +146,18 @@ function foglio_(nome, intestazione) {
   if (sh && sh.getLastRow() > 0) {
     const ncol = Math.max(sh.getLastColumn(), intestazione.length);
     const attuale = sh.getRange(1, 1, 1, ncol).getValues()[0].map(String);
+    // intestazione vecchia ma più CORTA (stesse colonne, mancano solo quelle nuove in fondo, come le
+    // colonne della dominanza): non si rinomina il foglio, si aggiungono le colonne mancanti
+    const nAttuali = attuale.filter(function (c) { return c !== ""; }).length;
+    const prefisso = nAttuali > 0 && nAttuali < intestazione.length &&
+                     attuale.slice(0, nAttuali).every(function (c, i) { return c === intestazione[i]; }) &&
+                     attuale.slice(nAttuali).every(function (c) { return c === ""; });
+    if (prefisso) {
+      // un foglio nuovo ha 26 colonne: se l'intestazione ne richiede di più (es. "risposte" con la dominanza: 27) si aggiungono
+      if (intestazione.length > sh.getMaxColumns()) sh.insertColumnsAfter(sh.getMaxColumns(), intestazione.length - sh.getMaxColumns());
+      sh.getRange(1, nAttuali + 1, 1, intestazione.length - nAttuali).setValues([intestazione.slice(nAttuali)]);
+      return sh;
+    }
     const uguale = intestazione.every(function (c, i) { return attuale[i] === c; }) &&
                    attuale.slice(intestazione.length).every(function (c) { return c === ""; });
     if (!uguale) {
@@ -174,7 +189,9 @@ function voto_(v, min, max) {
   return n;
 }
 const valenza_ = function (v) { return voto_(v, -2, 2); };   // −2 … +2 (0 = neutro)
-const scala5_ = function (v) { return voto_(v, 1, 5); };     // 1 … 5 (arousal)
+const scala5_ = function (v) { return voto_(v, 1, 5); };     // 1 … 5 (arousal, dominanza)
+// dominanza: assente nella versione della web app con due scale (cella vuota), da 1 a 5 in quella con tre
+const scala5Facoltativa_ = function (v) { return (v === undefined || v === null || v === "") ? "" : scala5_(v); };
 
 // Numero (anche 0) oppure cella vuota: per le misure, dove 0 è un valore valido
 // (es. pagina_nascosta = 0), a differenza di Number(x) || "" che trasformerebbe 0 in vuoto.
@@ -191,6 +208,10 @@ function misure_(r, colonne) {
 // i tre istanti dei tocchi (testo ISO, come "inizio" e "fine"); vuoti se la web app non li manda
 function istanti_(r) {
   return COLONNE_TS.map(function (k) { return ora_(r && r[k]); });
+}
+// Dominanza: voto, tempo del primo tocco (ms) e istante del tocco in ora italiana; tre celle vuote se non c'è
+function dom_(r) {
+  return [scala5Facoltativa_(r && r.dominanza), numero_(r && r.rt_dominanza_ms), ora_(r && r.ts_dominanza)];
 }
 // Cambi di voto della valenza: numero di cambi (0 se nessuno) e momento di ognuno in ms dalla
 // comparsa della schermata, separati da " ; " (es. "2519 ; 3400"). La web app manda già il testo pronto.
@@ -218,7 +239,7 @@ function ora_(iso) {
 //  - colonne numeriche → numero semplice (pausa_s con un decimale)
 //  - tutte le altre → testo (le stringhe ISO e gli id non vengono più trasformati in date o numeri)
 const FORMATO_DATAORA = "dd/MM/yyyy HH:mm:ss";
-const RE_NUMERICHE = /^(ordine_storia|gruppo|tipo_storia|n_frase|valenza|arousal|rt_.*_ms|n_cambi_.*|n_info|pagina_nascosta|durata_ms|tentativo|n_item|n_frasi_votate|tempo_.*_ms|righe|righe_umore|item_.*)$/;
+const RE_NUMERICHE = /^(ordine_storia|gruppo|tipo_storia|n_frase|valenza|arousal|dominanza|rt_.*_ms|n_cambi_.*|n_info|pagina_nascosta|durata_ms|tentativo|n_item|n_frasi_votate|tempo_.*_ms|righe|righe_umore|item_.*)$/;
 function formatoColonna_(nome) {
   if (nome === "ricevuto" || nome === "aggiornato") return FORMATO_DATAORA;
   if (nome === "pausa_s") return "0.0";
@@ -381,7 +402,7 @@ function doPost(e) {
         testo_(d.user_agent, 300),
         testo_(d.versione || "testi", 20),
         testo_(r.immagine, 200)
-      ]);
+      ], dom_(r));
     });
     const righeUmore = umore.map(function (u) {
       return [
@@ -399,7 +420,7 @@ function doPost(e) {
       ], istanti_(u), cambi_(u), [
         testo_(d.user_agent, 300),
         testo_(d.versione || "testi", 20)
-      ]);
+      ], dom_(u));
     });
     const righeQuest = [], votiQuest = [];
     questionari.forEach(function (q) {
@@ -437,7 +458,7 @@ function doPost(e) {
         if (!ordine || u.momento === "fine") return;          // lo stato d'animo finale non è di nessuna storia
         const a = agg(ordine);
         a.id_storia = testo_(u.id_storia_successiva, 100);
-        a.umore_ms += zero_(u.rt_valenza_ms) + zero_(u.rt_arousal_ms);
+        a.umore_ms += zero_(u.rt_valenza_ms) + zero_(u.rt_arousal_ms) + zero_(u.rt_dominanza_ms);
       });
       risposte.forEach(function (r) {
         const ordine = Number(r.ordine);
@@ -445,7 +466,7 @@ function doPost(e) {
         const a = agg(ordine);
         a.id_storia = testo_(r.id_storia, 100); a.gruppo = numero_(r.gruppo); a.tipo_storia = numero_(r.tipo_storia);
         a.n_frasi += 1;
-        a.frasi_ms += zero_(r.rt_valenza_ms) + zero_(r.rt_arousal_ms);
+        a.frasi_ms += zero_(r.rt_valenza_ms) + zero_(r.rt_arousal_ms) + zero_(r.rt_dominanza_ms);
       });
       const ordini = Object.keys(perStoria);
       if (ordini.length) {
