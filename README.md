@@ -150,9 +150,10 @@ di una versione precedente, lo script lo rinomina (`…_vecchio_<data>`) e ne cr
 
 ## File
 
-- `index.html`: la web app (storie incluse nel file).
-- `Code.gs`: lo script di Google Apps Script che riceve le risposte (versione **v9**: aprendo
-  l'URL `/exec` deve comparire "codice v9"). Su GitHub è solo una copia di riferimento: quello
+- `index.html`: la web app (storie incluse nel file), con due scale (valenza e arousal).
+- `index_dominanza.html`: la stessa web app con tre scale (aggiunge la dominanza), vedi sotto.
+- `Code.gs`: lo script di Google Apps Script che riceve le risposte (versione **v10**: aprendo
+  l'URL `/exec` deve comparire "codice v10"). Su GitHub è solo una copia di riferimento: quello
   che conta è il codice incollato in Apps Script e distribuito con "Nuova versione".
 - `storie_IDEST_90.json`: le 90 storie usate, con `gruppo` e `tipo` (StoryType); sono le stesse
   incluse in `index.html`.
@@ -166,3 +167,19 @@ di una versione precedente, lo script lo rinomina (`…_vecchio_<data>`) e ne cr
 Nella schermata finale (e solo lì) il pulsante **"Salva il tuo profilo come immagine"**
 crea un PNG con profilo e grafico. Sul telefono apre la condivisione (Salva immagine, Instagram…),
 sul computer scarica il file. L'immagine resta sul dispositivo: non viene inviata al foglio.
+
+## Versione con la dominanza (`index_dominanza.html`)
+
+Copia della web app con **tre scale SAM** (valenza, arousal e **dominanza**, da 1 a 5), tutto il resto uguale
+(stessi questionari, stesse storie, stesso salvataggio per storia, stessa schermata finale). Online all'indirizzo
+https://jacopogiannelli.github.io/studio-vad/index_dominanza.html (accanto a `index.html`, che resta con due scale).
+
+- Scrive **nello stesso Google Sheet** e con lo stesso `Code.gs` (v10). La colonna `versione` distingue le due
+  web app: `testi` (due scale) e `testi_dom` (tre scale).
+- Per la dominanza `Code.gs` aggiunge **in fondo** ai fogli `risposte` e `umore` tre colonne: `dominanza`,
+  `rt_dominanza_ms` (tempo del primo tocco) e `ts_dominanza` (ora del tocco). Per la versione a due scale restano
+  vuote. In `ordine_voti` compare anche la sigla `D` (es. `V-A-D`) e `tempi_storie` somma anche il tempo della dominanza.
+- Se un foglio esiste già con l'intestazione della v9 (senza queste colonne), `Code.gs` aggiunge le colonne mancanti
+  in fondo senza rinominare il foglio e senza toccare i dati già presenti.
+- Le due versioni hanno una sessione salvata nel browser separata (chiave diversa), quindi non si mescolano.
+- Il profilo finale torna ad avere 15 profili, con lo stile «timoniere» (dominanza alta).
