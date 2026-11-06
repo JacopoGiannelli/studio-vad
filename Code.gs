@@ -1,9 +1,9 @@
 /**
  * Apps Script che riceve le risposte della web app VAD e le scrive nel Google Sheet.
- * Versione del codice: v8 (90 storie in 6 gruppi, DUE scale mostrate insieme: valenza e arousal,
+ * Versione del codice: v9 (90 storie in 6 gruppi, DUE scale mostrate insieme: valenza e arousal,
  * senza dominanza; voto modificabile finché non sono state date entrambe le risposte, con conteggio
  * e istanti dei cambi di voto; tempi per voto e ordine dei voti, tempo totale per storia,
- * questionari PANAS / STAI / BSI-18, tempo sulle pagine e tempo totale) – v8.
+ * questionari PANAS / STAI / BSI-18, tempo sulle pagine e tempo totale; lotti per storia, tempi_storie aggiornato una volta per lotto) – v9.
  *
  * Le risposte arrivano a "lotti": la web app invia una richiesta POST (JSON) subito dopo
  * ogni risposta, cioè dopo i due voti di ogni frase, dopo ogni stato d'animo e (quando la web app
@@ -72,7 +72,7 @@
  * Versione: Nuova versione → Distribuisci (l'URL /exec resta lo stesso).
  */
 
-const VERSIONE_CODICE = "v8";
+const VERSIONE_CODICE = "v9";
 
 // ID del Google Sheet "Risposte studio VAD" (la parte dell'indirizzo tra /d/ e /edit).
 // Serve se lo script NON è stato creato da Estensioni → Apps Script dentro il foglio:
@@ -227,6 +227,11 @@ function formatoColonna_(nome) {
 }
 // imposta i formati su nrighe righe a partire da "riga", secondo i nomi delle colonne (intestazione)
 function formati_(sh, riga, nrighe, intestazione) {
+  // Un foglio nuovo ha 1000 righe e 26 colonne: se servono di più si aggiungono da sole, così lo studio
+  // non si blocca quando i partecipanti sono tanti (questa funzione viene chiamata prima di ogni scrittura).
+  const ultima = riga + nrighe - 1;
+  if (ultima > sh.getMaxRows()) sh.insertRowsAfter(sh.getMaxRows(), Math.max(ultima - sh.getMaxRows(), 1000));
+  if (intestazione.length > sh.getMaxColumns()) sh.insertColumnsAfter(sh.getMaxColumns(), intestazione.length - sh.getMaxColumns());
   const f = intestazione.map(formatoColonna_);
   sh.getRange(riga, 1, nrighe, f.length).setNumberFormats(Array.from({ length: nrighe }, function () { return f; }));
 }
@@ -240,12 +245,13 @@ function testo_(s, max) {
 }
 
 // Scrive tutte le righe con una sola operazione: più veloce di tanti appendRow.
-function scrivi_(sh, righe, ncol) {
+// "intestazione" è l'elenco delle colonne del foglio (foglio_ ha già controllato che coincida con quella
+// scritta in riga 1: non serve rileggerla dal foglio a ogni invio).
+function scrivi_(sh, righe, intestazione) {
   if (!righe.length) return;
   const riga = sh.getLastRow() + 1;
-  const testa = sh.getRange(1, 1, 1, ncol).getValues()[0].map(String);
-  formati_(sh, riga, righe.length, testa);           // prima i formati, poi i valori
-  sh.getRange(riga, 1, righe.length, ncol).setValues(righe);
+  formati_(sh, riga, righe.length, intestazione);    // prima i formati, poi i valori
+  sh.getRange(riga, 1, righe.length, intestazione.length).setValues(righe);
 }
 
 // ---------- tempo per storia ----------
@@ -412,34 +418,40 @@ function doPost(e) {
               testo_(d.user_agent, 300), testo_(d.versione || "testi", 20)];
     });
 
-    if (righe.length) scrivi_(foglio_(NOME_FOGLIO, INTESTAZIONE), righe, INTESTAZIONE.length);
-    if (righePagine.length) scrivi_(foglio_(NOME_FOGLIO_PAGINE, INTESTAZIONE_PAGINE), righePagine, INTESTAZIONE_PAGINE.length);
-    if (righeUmore.length) scrivi_(foglio_(NOME_FOGLIO_UMORE, INTESTAZIONE_UMORE), righeUmore, INTESTAZIONE_UMORE.length);
+    if (righe.length) scrivi_(foglio_(NOME_FOGLIO, INTESTAZIONE), righe, INTESTAZIONE);
+    if (righePagine.length) scrivi_(foglio_(NOME_FOGLIO_PAGINE, INTESTAZIONE_PAGINE), righePagine, INTESTAZIONE_PAGINE);
+    if (righeUmore.length) scrivi_(foglio_(NOME_FOGLIO_UMORE, INTESTAZIONE_UMORE), righeUmore, INTESTAZIONE_UMORE);
     if (righeQuest.length) {
-      scrivi_(foglio_(NOME_FOGLIO_QUEST, INTESTAZIONE_QUEST), righeQuest, INTESTAZIONE_QUEST.length);
+      scrivi_(foglio_(NOME_FOGLIO_QUEST, INTESTAZIONE_QUEST), righeQuest, INTESTAZIONE_QUEST);
       votiQuest.forEach(function (q) { scriviVoti_(ora, sessione, q.nome, q.item); });
     }
 
-    // tempo per storia: stato d'animo PRIMA della storia + tutte le sue frasi
+    // tempo per storia: stato d'animo PRIMA della storia + tutte le sue frasi.
+    // I tempi si sommano in memoria per storia e il foglio si aggiorna UNA volta per storia
+    // (prima era una ricerca e una scrittura per ogni frase: con una storia intera in un lotto era lentissimo).
     if (righe.length || righeUmore.length) {
-      const shTempi = foglio_(NOME_FOGLIO_TEMPI, INTESTAZIONE_TEMPI);
+      const perStoria = {};
+      const agg = function (ordine) { return perStoria[ordine] || (perStoria[ordine] = { umore_ms: 0, frasi_ms: 0, n_frasi: 0 }); };
       umore.forEach(function (u) {
         const ordine = Number(u.ordine_storia);
         if (!ordine || u.momento === "fine") return;          // lo stato d'animo finale non è di nessuna storia
-        aggiornaTempoStoria_(shTempi, ora, sessione, ordine, {
-          id_storia: testo_(u.id_storia_successiva, 100),
-          umore_ms: zero_(u.rt_valenza_ms) + zero_(u.rt_arousal_ms)
-        });
+        const a = agg(ordine);
+        a.id_storia = testo_(u.id_storia_successiva, 100);
+        a.umore_ms += zero_(u.rt_valenza_ms) + zero_(u.rt_arousal_ms);
       });
       risposte.forEach(function (r) {
         const ordine = Number(r.ordine);
         if (!ordine) return;
-        aggiornaTempoStoria_(shTempi, ora, sessione, ordine, {
-          id_storia: testo_(r.id_storia, 100), gruppo: numero_(r.gruppo), tipo_storia: numero_(r.tipo_storia),
-          n_frasi: 1,
-          frasi_ms: zero_(r.rt_valenza_ms) + zero_(r.rt_arousal_ms)
-        });
+        const a = agg(ordine);
+        a.id_storia = testo_(r.id_storia, 100); a.gruppo = numero_(r.gruppo); a.tipo_storia = numero_(r.tipo_storia);
+        a.n_frasi += 1;
+        a.frasi_ms += zero_(r.rt_valenza_ms) + zero_(r.rt_arousal_ms);
       });
+      const ordini = Object.keys(perStoria);
+      if (ordini.length) {
+        const shTempi = foglio_(NOME_FOGLIO_TEMPI, INTESTAZIONE_TEMPI);
+        ordini.forEach(function (o) { aggiornaTempoStoria_(shTempi, ora, sessione, Number(o), perStoria[o]); });
+      }
     }
 
     if (lotto) {

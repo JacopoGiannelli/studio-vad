@@ -41,8 +41,9 @@ L'elenco delle 90 storie e il motivo della selezione sono in `selezione_90_stori
    viene contato e datato (solo per la valenza: colonne `n_cambi_valenza` e `t_cambi_valenza_ms`).
 7. Dopo ogni storia: pausa obbligatoria di 20 s con timer, poi di nuovo lo stato d'animo
    (due scale). Dopo l'ultima storia, stato d'animo finale.
-8. Schermata finale con il solo ringraziamento; l'invio delle risposte rimaste è controllato
-   e ritentato in silenzio.
+8. Schermata finale: compare «Sto salvando le tue risposte… non chiudere ancora la pagina» e,
+   appena tutti i dati sono nel foglio (di solito pochi secondi), «Risposte salvate: puoi chiudere
+   la pagina». L'invio viene ritentato ogni 2 secondi finché non è completo.
 
 Scale: **valenza da −2 a +2** (0 = neutro), arousal da 1 (calmo) a 5 (eccitato). La **dominanza è stata tolta**.
 Accanto a ogni scala c'è un pulsante **(i)** che riassume il criterio di valutazione.
@@ -128,13 +129,19 @@ dall'apertura del sito all'ultima risposta, pause comprese. Colonne: `inizio`, `
 
 ## Salvataggio dei dati e ripresa della sessione
 
-- Ogni risposta viene inviata subito come un **lotto** (i voti di una frase oppure uno stato
-  d'animo) a un Google Apps Script (`Code.gs`) che scrive in un Google Sheet.
+- I dati partono a **lotti** verso un Google Apps Script (`Code.gs`) che scrive in un Google Sheet,
+  in tutto circa 8 invii a persona: **uno dopo i questionari** (con la pagina iniziale), **uno per ogni
+  storia finita** (tutte le sue frasi, lo stato d'animo che la precede e i tempi delle pagine passate)
+  e **uno alla fine** (stato d'animo finale e tempo totale). Gli invii si fanno prima della pausa di 20 s,
+  così a fine studio resta pochissimo da inviare.
   La richiesta è un POST `text/plain`, per evitare il preflight CORS.
 - I lotti non inviati (es. connessione assente) restano in coda e vengono rimandati;
-  il numero di lotto permette ad Apps Script di scartare gli invii doppi.
-- Lo stato della sessione è salvato nel browser (`localStorage`) dopo ogni voto: se la pagina
-  viene chiusa, riaprendola dallo stesso browser si riprende dalla frase in cui ci si era fermati.
+  il numero di lotto permette ad Apps Script di scartare gli invii doppi. Se la pagina viene chiusa
+  con lotti ancora in coda, il browser prova a mandarli subito (`keepalive`); quelli non arrivati
+  restano salvati e partono alla riapertura.
+- Lo stato della sessione è salvato nel browser (`localStorage`): se la pagina viene chiusa, riaprendola
+  dallo stesso browser si riprende dalla **storia in cui ci si era fermati, ricominciandola dall'inizio**
+  (le frasi di una storia non finita non vengono salvate). Le storie già finite sono al sicuro.
 
 Fogli del Google Sheet: **risposte** (una riga per frase), **umore** (una riga per ogni
 stato d'animo), **tempi_storie** (tempo totale di voto per storia), **tempi_pagine** (pagine e tempo totale), **questionari** e
@@ -144,8 +151,8 @@ di una versione precedente, lo script lo rinomina (`…_vecchio_<data>`) e ne cr
 ## File
 
 - `index.html`: la web app (storie incluse nel file).
-- `Code.gs`: lo script di Google Apps Script che riceve le risposte (versione **v8**: aprendo
-  l'URL `/exec` deve comparire "codice v8"). Su GitHub è solo una copia di riferimento: quello
+- `Code.gs`: lo script di Google Apps Script che riceve le risposte (versione **v9**: aprendo
+  l'URL `/exec` deve comparire "codice v9"). Su GitHub è solo una copia di riferimento: quello
   che conta è il codice incollato in Apps Script e distribuito con "Nuova versione".
 - `storie_IDEST_90.json`: le 90 storie usate, con `gruppo` e `tipo` (StoryType); sono le stesse
   incluse in `index.html`.

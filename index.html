@@ -78,6 +78,15 @@ section.block { display: grid; gap: 14px; }
 
 ol.steps { margin: 0; padding-left: 1.3rem; display: grid; gap: 6px; }
 .note { font-size: .9rem; color: var(--muted); }
+/* schermata finale: stato del salvataggio (si può chiudere solo quando è completo) */
+.salvataggio { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--line);
+               border-left: 4px solid var(--warn); border-radius: 10px; background: var(--surface); font-weight: 600; }
+.salvataggio.ok { border-left-color: var(--ok); }
+.salvataggio .giro { flex: none; width: 18px; height: 18px; border: 3px solid var(--line); border-top-color: var(--accent);
+                     border-radius: 50%; animation: giro .9s linear infinite; }
+.salvataggio.ok .giro { display: none; }
+@keyframes giro { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .salvataggio .giro { animation: none; } }
 
 /* Bottoni */
 .btn { font: 600 1rem var(--font-ui); border: 1px solid transparent; border-radius: 8px; padding: 12px 22px; cursor: pointer; background: var(--accent); color: var(--accent-fg); justify-self: start; }
@@ -2331,10 +2340,9 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     <header class="block" style="display:grid;gap:10px">
       <p class="eyebrow">Questionari completati · grazie!</p>
       <h1>Come funziona lo studio</h1>
-      <p class="lead">Leggerai <span class="n-storie">6</span> storie scelte a caso. Le storie sono brevi, di poche frasi ciascuna, e compaiono una frase alla volta.</p>
+      <p class="lead">Leggerai <span class="n-storie">6</span> brevi storie che compariranno una frase alla volta.</p>
       <div class="istruzioni">
-        <p>Dopo <b>ogni frase</b> ti chiederemo di descrivere, con due voti, <b>come ti senti tu in questo momento</b>, subito dopo averla letta: cioè l'emozione che quella frase ha suscitato <b>in te</b>.</p>
-        <p><b>Non devi dare un voto alla frase</b> (se è triste o allegra, se descrive una situazione tranquilla o pericolosa…): fermati un attimo, ascolta il tuo stato d'animo e descrivi quello. Se la frase non ti ha fatto nessun effetto, va benissimo dirlo.</p>
+        <p>Dopo <b>ogni frase</b> ti chiederemo di descrivere, con due voti, <b>come ti senti subito dopo averla letta</b>: ascolta il tuo stato d'animo e descrivi quello – se la frase non ti ha fatto nessun effetto, va benissimo dirlo. Non riportare ciò che pensi la frase evochi in altre persone o come si sentono i personaggi, ma <b>come ha fatto sentire te in quel momento</b>. Non ci sono risposte giuste o sbagliate: conta quello che provi.</p>
       </div>
     </header>
 
@@ -2359,15 +2367,10 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     <section class="block" aria-labelledby="h-cosa">
       <h2 id="h-cosa">Cosa devi fare</h2>
       <ol class="steps">
-        <li>Per prendere confidenza con le domande, farai prima una <b>frase di prova</b>: la sua risposta non viene salvata.</li>
-        <li>Prima della prima storia ti chiederemo <b>come ti senti in questo momento</b>, con le stesse due scale: valenza e arousal.</li>
-        <li>Ogni storia è breve e viene mostrata <b>una frase alla volta</b>. Sullo schermo compare solo la frase da leggere: leggila con attenzione.</li>
-        <li>Sotto la frase compaiono <b>insieme le due scale</b>: valenza e arousal. Per ognuna tocca la figura che descrive meglio <b>come ti senti tu adesso</b>, dopo aver letto la frase: non come si sentono i personaggi e non quanto è emozionante la frase in sé.</li>
-        <li>Puoi <b>cambiare idea</b>: finché non hai risposto a entrambe le scale, puoi toccare un'altra figura. Appena hai risposto a tutte e due si passa automaticamente alla frase successiva, e a quel punto la risposta è definitiva. Accanto a ogni scala c'è il pulsante <b>i</b>: passaci sopra o toccalo per rileggere cosa significa.</li>
-        <li>Finita una storia c'è una <b>pausa di 20 secondi</b>, con un timer sullo schermo: rilassati e lascia andare la storia appena letta. Alla fine della pausa ti chiederemo di nuovo come ti senti, e poi inizia la storia successiva, fino a completare tutte e <span class="n-storie">6</span>.</li>
-        <li>Ogni risposta viene salvata <b>subito dopo averla data</b>. Se chiudi la pagina per sbaglio, riaprila dallo <b>stesso dispositivo e browser</b>: ripartirai dal punto in cui eri rimasto.</li>
+        <li>Sotto la frase compaiono <b>insieme le due scale</b> (valenza e arousal): appena fornisci entrambe le valutazioni si passa automaticamente alla frase successiva e non puoi più cambiare il voto. Accanto a ogni scala c'è il pulsante <b>i</b>: passaci sopra o toccalo per rileggere cosa significa.</li>
+        <li>Se chiudi la pagina per sbaglio, riaprila dallo <b>stesso dispositivo e browser</b>: ripartirai dall'inizio della storia in cui eri rimasto.</li>
+        <li>Tra una storia e l'altra c'è una <b>pausa di 20 secondi</b>, con un timer sullo schermo: rilassati e lascia andare la storia appena letta.</li>
       </ol>
-      <p class="note">Non ci sono risposte giuste o sbagliate: conta quello che provi. Passata alla frase successiva, non si può tornare indietro. Oltre ai voti registriamo, in forma anonima, i tempi di risposta.</p>
     </section>
 
     <div class="row">
@@ -2455,6 +2458,11 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       <h1>Grazie per la partecipazione</h1>
       <p class="lead">Hai completato lo studio. Grazie per il tempo che ci hai dedicato: le tue risposte sono anonime.</p>
     </header>
+    <!-- si può chiudere la pagina solo quando compare "Risposte salvate" (di solito pochi secondi) -->
+    <p class="salvataggio" id="salvataggio" role="status" aria-live="polite">
+      <span class="giro" aria-hidden="true"></span>
+      <span id="salvataggio-testo">Sto salvando le tue risposte… non chiudere ancora la pagina.</span>
+    </p>
     <!-- profilo di lettura: calcolato dai voti sulle storie (vedi mostraProfilo nello script) -->
     <section class="profilo" id="profilo" hidden aria-labelledby="profilo-nome">
       <p class="eyebrow">Come hai vissuto le storie</p>
@@ -2503,7 +2511,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   const VALORI = { valenza: [-2, -1, 0, 1, 2], arousal: [1, 2, 3, 4, 5] };
   // sessione in corso salvata nel browser ("v4": le sessioni salvate con le versioni precedenti,
   // che avevano scale diverse, vengono ignorate)
-  const CHIAVE_STATO = "vad_stato_v4_" + VERSIONE;
+  const CHIAVE_STATO = "vad_stato_v5_" + VERSIONE;
   // frase di prova mostrata prima dello studio: la risposta NON viene salvata
   const FRASE_PROVA = "Mentre torno a casa inizia a piovere forte e mi accorgo di aver dimenticato l'ombrello.";
   // domande sullo stato d'animo: prima della prima storia, tra una storia e l'altra, alla fine
@@ -2855,7 +2863,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   }
 
   // Calcolo vero e proprio. Per misurare si mette temporaneamente nel riquadro il testo peggiore e si
-  // mostrano tutte e tre le scale; alla fine la schermata viene rimessa esattamente com'era.
+  // mostrano tutte e due le scale; alla fine la schermata viene rimessa esattamente com'era.
   // Tutto avviene in modo sincrono, quindi chi usa la pagina non vede niente di questo.
   function calcolaMisure() {
     const box = $("story-text");
@@ -2915,6 +2923,9 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
 
   // frasi totali della sessione, per una barra di avanzamento onesta
   let totFrasi = 0, fatte = 0;
+  // risposte della storia in corso: partono verso il foglio tutte insieme quando la storia è finita.
+  // Se la persona esce a metà, alla ripresa la storia ricomincia da capo (queste risposte non servono).
+  let righeStoria = [];
 
   // barra di avanzamento: cresce solo quando una storia è COMPLETATA (storie finite / storie totali),
   // non a ogni frase; durante una storia resta ferma
@@ -2931,6 +2942,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     box.textContent = "";
     box.className = "story";
     fase = "frase"; attive = SCALE;
+    if (fidx === 0) righeStoria = [];                  // inizio storia (anche dopo una ripresa): si riparte da zero
     // immagine della frase, se il dataset la prevede (protocollo B)
     const src = s.immagini && s.immagini[fidx];
     if (src) {
@@ -3049,9 +3061,9 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     st.fine[q.id] = new Date().toISOString();
     const durata = Date.parse(st.fine[q.id]) - Date.parse(st.inizio[q.id]);
     // i voti di questo questionario partono subito verso il foglio
-    accodaLotto([], [{ questionario: q.id, inizio: st.inizio[q.id], fine: st.fine[q.id],
-                       durata_ms: isFinite(durata) ? durata : "", risposte: date }]);
-    inviaCoda();
+    // i questionari partono tutti insieme (in un solo lotto) alla fine dell'ultimo, vedi fineQuestionari
+    tieni([{ questionario: q.id, inizio: st.inizio[q.id], fine: st.fine[q.id],
+             durata_ms: isFinite(durata) ? durata : "", risposte: date }], []);
     st.qidx++;
     if (st.qidx < QUEST.length) mostraQuestionario();
     else fineQuestionari();
@@ -3079,11 +3091,11 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     const fine = new Date().toISOString();
     const tent = sessione.tentativi_pagine || (sessione.tentativi_pagine = {});
     tent[nome] = (tent[nome] || 0) + 1;
-    accodaLotto([], [], [{ pagina: nome, tentativo: tent[nome], inizio: p.inizio, fine: fine,
-                           durata_ms: Date.parse(fine) - Date.parse(p.inizio), pagina_nascosta: p.nascosta }]);
+    // il tempo della pagina viene tenuto da parte e parte con il prossimo lotto (niente invio per ogni pagina)
+    tieni([], [{ pagina: nome, tentativo: tent[nome], inizio: p.inizio, fine: fine,
+                 durata_ms: Date.parse(fine) - Date.parse(p.inizio), pagina_nascosta: p.nascosta }]);
     delete sessione.pagine[nome];
     salvaStato();
-    inviaCoda();
   }
   const segnaPagineNascoste = () => {
     if (inPausaSchermo() && sessione.pagine) Object.values(sessione.pagine).forEach(p => { p.nascosta = 1; });
@@ -3094,6 +3106,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   function fineQuestionari() {
     show("s-quest-fine");
     fase_ = "dopo_questionari"; salvaStato();
+    accodaLotto([]); inviaCoda();                      // questionari e pagina iniziale partono in un solo lotto
     inizioPagina("spiegazione");                       // pagina "Come funziona lo studio"
   }
 
@@ -3193,8 +3206,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       valenza: v.valenza, arousal: v.arousal,
       ...campiMisura()
     });
-    accodaLotto([]);                                 // anche lo stato d'animo parte subito
-    inviaCoda();
+    // lo stato d'animo non parte da solo: viaggia con il lotto della storia che segue (meno invii al foglio)
     if (idx === 0) { fidx = 0; mostraAvviso(); }     // dopo il primo stato d'animo: avviso, poi la prima frase
     else if (idx < n) { fidx = 0; renderFrase(); }
     else concludi();
@@ -3245,7 +3257,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     const v = valori();
     if (!DIMENSIONI.every(d => v[d] != null)) return;
     const s = sessione.storie[idx];
-    sessione.risposte.push({
+    righeStoria.push({
       ordine: idx + 1, id_storia: s.id, gruppo: s.gruppo ?? "", tipo_storia: s.tipo ?? "",
       n_frase: fidx + 1, frase: s.frasi[fidx],
       valenza: v.valenza, arousal: v.arousal,
@@ -3254,17 +3266,23 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     });
     fatte++;
     fidx++;
-    // il voto di questa frase parte subito verso il foglio
-    accodaLotto([sessione.risposte[sessione.risposte.length - 1]]);
-    if (fidx >= s.frasi.length) { idx++; fidx = 0; avviaPausa(); }   // fine storia: pausa, poi stato d'animo
-    else renderFrase();
-    inviaCoda();
+    if (fidx >= s.frasi.length) {
+      // fine storia: tutte le sue risposte (più stato d'animo e pagine in attesa) partono in UN lotto,
+      // PRIMA della pausa di 20 s, così al momento di chiudere resta pochissimo da inviare
+      sessione.risposte.push(...righeStoria);
+      const lotto = righeStoria; righeStoria = [];
+      idx++; fidx = 0;
+      accodaLotto(lotto);
+      avviaPausa();                                     // pausa, poi stato d'animo
+      inviaCoda();
+    } else renderFrase();                               // frase successiva: niente invio, la storia parte a fine storia
   }
 
   // ---------- invio al Google Sheet (Apps Script) ----------
-  // Ogni risposta diventa un "lotto": il voto di una frase, oppure uno stato d'animo.
-  // Il lotto viene messo in coda e inviato subito. Se l'invio non riesce (rete assente, pagina
-  // chiusa) il lotto resta in coda, salvata nel browser, e riparte al tentativo successivo.
+  // I dati partono a "lotti": uno dopo i questionari, uno per ogni storia finita (con le sue frasi, lo stato
+  // d'animo che la precede e i tempi delle pagine) e uno alla fine. Il lotto viene messo in coda e inviato subito.
+  // Se l'invio non riesce (rete assente, pagina chiusa) il lotto resta in coda, salvata nel browser,
+  // e riparte al tentativo successivo: una storia finita non si perde.
   // Il numero di lotto permette ad Apps Script di scartare un invio arrivato due volte.
   // Il body viene mandato come text/plain: è una "richiesta semplice" per il browser,
   // quindi non parte la richiesta preliminare CORS (preflight) che Apps Script non gestisce.
@@ -3272,16 +3290,32 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   // ogni lotto porta anche gli stati d'animo registrati e non ancora inviati
   // questionari = questionari completati da inviare in questo lotto (facoltativo)
   // pagine = tempi delle pagine da inviare in questo lotto (facoltativo)
+  // Questionari e tempi delle pagine non partono da soli: si tengono da parte (sessione.attesa, salvata
+  // nel browser) e viaggiano con il prossimo lotto. Così gli invii sono pochi: uno dopo i questionari,
+  // uno per ogni storia e uno alla fine (circa 8 per persona invece di quasi 90).
+  function tieni(questionari, pagine) {
+    const a = sessione.attesa || (sessione.attesa = { questionari: [], pagine: [] });
+    a.questionari.push(...(questionari || []));
+    a.pagine.push(...(pagine || []));
+    salvaStato();
+  }
   function accodaLotto(risposte, questionari, pagine) {
+    const a = sessione.attesa || (sessione.attesa = { questionari: [], pagine: [] });
+    a.questionari.push(...(questionari || []));
+    a.pagine.push(...(pagine || []));
+    // limiti di Code.gs per lotto: 10 questionari, 20 pagine, 50 stati d'animo; il resto va nel lotto dopo
+    const quest = a.questionari.splice(0, 8), pag = a.pagine.splice(0, 15);
+    const umore = sessione.umore.slice(umoreInviato, umoreInviato + 40);
+    if (!risposte.length && !umore.length && !quest.length && !pag.length) return;   // niente da inviare: nessun lotto vuoto
     nLotto++;
     coda.push({
       lotto: sessione.id + "-" + nLotto,
       risposte: risposte,
-      umore: sessione.umore.slice(umoreInviato),
-      questionari: questionari || [],
-      pagine: pagine || []
+      umore: umore,
+      questionari: quest,
+      pagine: pag
     });
-    umoreInviato = sessione.umore.length;
+    umoreInviato += umore.length;
     salvaStato();
   }
 
@@ -3299,21 +3333,36 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     boxDebug.textContent = new Date().toLocaleTimeString() + " · " + testo + " · in coda: " + coda.length;
   }
 
+  const corpoLotto = l => JSON.stringify({
+    lotto: l.lotto,
+    sessione: sessione.id, inizio: sessione.inizio, fine: sessione.fine || "",
+    user_agent: navigator.userAgent, versione: VERSIONE,
+    risposte: l.risposte, umore: l.umore, questionari: l.questionari || [], pagine: l.pagine || []
+  });
   async function inviaLotto(l) {
     const res = await fetch(APPS_SCRIPT_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({
-        lotto: l.lotto,
-        sessione: sessione.id, inizio: sessione.inizio, fine: sessione.fine || "",
-        user_agent: navigator.userAgent, versione: VERSIONE,
-        risposte: l.risposte, umore: l.umore, questionari: l.questionari || [], pagine: l.pagine || []
-      })
+      body: corpoLotto(l),
+      keepalive: true                      // la richiesta continua anche se la pagina viene chiusa subito dopo
     });
     const out = await res.json();
     if (!out.ok) throw new Error(out.error || "errore sconosciuto");
     return out;
   }
+  // Se la pagina viene chiusa o messa in secondo piano con lotti ancora in coda, si prova a mandarli subito
+  // (senza aspettare la risposta). Un lotto arrivato due volte viene ignorato dal foglio (numero di lotto).
+  function mandaInUscita() {
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("script.google.com") === -1) return;
+    coda.slice(0, 3).forEach(l => {
+      try {
+        fetch(APPS_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                 body: corpoLotto(l), keepalive: true }).catch(() => {});
+      } catch (e) {}
+    });
+  }
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") mandaInUscita(); });
+  window.addEventListener("pagehide", mandaInUscita);
 
   // invia i lotti in coda uno alla volta, nell'ordine; restituisce true se la coda è vuota.
   // Un lotto che non passa (rete assente o rifiutato dal foglio) resta in coda per il
@@ -3323,6 +3372,8 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("script.google.com") === -1) return Promise.resolve(false);
     if (inInvio) { ancora = true; return inInvio; }  // un solo invio alla volta; se ne arrivano altri, si ripassa
     inInvio = (async () => {
+      await null;          // lascia assegnare inInvio prima di cominciare: con la coda vuota il finally girava PRIMA dell'assegnazione
+                           // e inInvio restava "occupato" per sempre, bloccando tutti gli invii successivi
       try {
         do {
           ancora = false;
@@ -3356,13 +3407,20 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     const ok = await inviaCoda();
     if (ok) {
       $("invio-avviso").hidden = true;
+      statoSalvataggio(true);                        // "Risposte salvate: puoi chiudere la pagina"
       segnalaDebug("tutte le risposte sono state inviate", true);
       cancellaStato();                               // sessione chiusa: niente da riprendere
     } else {
       tentativiFine++;
       if (tentativiFine >= 3) $("invio-avviso").hidden = false;
-      timerFine = setTimeout(tentaSalvataggio, 10000);
+      timerFine = setTimeout(tentaSalvataggio, 2000);   // si riprova spesso: la persona sta aspettando
     }
+  }
+  // schermata finale: finché la coda non è vuota la persona vede "Sto salvando…" (di solito pochi secondi)
+  function statoSalvataggio(salvato) {
+    $("salvataggio").classList.toggle("ok", salvato);
+    $("salvataggio-testo").textContent = salvato ? "Risposte salvate: puoi chiudere la pagina. Grazie!"
+                                                  : "Sto salvando le tue risposte… non chiudere ancora la pagina.";
   }
   // appena torna la connessione si riprova subito
   window.addEventListener("online", () => { if (fase_ === "fine") tentaSalvataggio(); });
@@ -3747,7 +3805,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     else if (st.fase === "fine") { show("s-end"); mostraProfilo(); tentaSalvataggio(); }
     else if (st.fase === "pausa") avviaPausa();      // la pausa riparte da capo (20 s)
     else if (st.fase === "avviso" && idx < n) mostraAvviso();   // avviso prima della prima storia
-    else if (st.fase === "frase" && idx < n) { show("s-story"); renderFrase(); }
+    else if (st.fase === "frase" && idx < n) { fidx = 0; righeStoria = []; show("s-story"); renderFrase(); }   // la storia in corso ricomincia da capo
     else iniziaUmore();                              // stato d'animo da dare (inizio, dopo pausa o fine)
   }
 
@@ -3761,7 +3819,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
         ? "Stavi compilando i questionari (" + Math.min((stato0.sessione.questionari || {}).qidx + 1 || 1, QUEST.length) + " di " + QUEST.length + ")."
         : stato0.fase === "dopo_questionari" ? "Hai completato i questionari: puoi iniziare lo studio."
         : stato0.fase === "frase"
-        ? "Eri alla storia " + (stato0.idx + 1) + " di " + n + ", frase " + (stato0.fidx + 1) + "."
+        ? "Eri alla storia " + (stato0.idx + 1) + " di " + n + ": la rileggerai dall'inizio (le storie già finite sono al sicuro)."
         : "Hai completato " + stato0.idx + " storie su " + n + ".";
       $("riprendi").hidden = false; $("riga-inizia").hidden = true;
       $("b-riprendi").addEventListener("click", () => { bloccaVerticale(); $("riprendi").hidden = true; riprendi(stato0); });
