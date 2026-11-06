@@ -2515,7 +2515,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   ];
   // misure registrate per ogni frase e ogni stato d'animo, oltre ai voti (stesse colonne nel foglio)
   const COLONNE_MISURE = ["rt_valenza_ms", "rt_arousal_ms", "n_info", "pagina_nascosta", "ordine_voti", "ts_valenza", "ts_arousal",
-                          "n_cambi_valenza", "ts_cambi_valenza", "n_cambi_arousal", "ts_cambi_arousal"];
+                          "n_cambi_valenza", "t_cambi_valenza_ms"];
   // con ?debug alla fine dell'indirizzo compare in basso l'esito di ogni invio al foglio
   const DEBUG = false;   // riquadro di controllo rimosso
 
@@ -2664,8 +2664,9 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   //  - rt_<dim>_ms: tempo impiegato per il PRIMO voto di quella scala. Le due scale sono sullo schermo
   //    insieme, quindi il tempo di un voto va dal voto PRECEDENTE (o dalla comparsa della schermata,
   //    per il primo) al primo tocco di quella scala. Il cronometro si ferma se la pagina viene nascosta.
-  //  - n_cambi_<dim> e ts_cambi_<dim>: quante volte la persona ha cambiato il voto di quella scala dopo
-  //    il primo tocco, e l'istante (UTC) di ogni cambio; Code.gs li converte in ora italiana
+  //  - n_cambi_valenza e t_cambi_valenza_ms: quante volte la persona ha cambiato il voto della valenza dopo
+  //    il primo tocco, e il momento di ogni cambio in ms dalla comparsa della schermata (stessa misura
+  //    di rt_<dim>_ms, cronometro fermo se la pagina è nascosta). Per l'arousal i cambi non si registrano.
   //  - ordine_voti: in che ordine sono state scelte le scale la prima volta (es. "V-A" = valenza, arousal)
   //  - n_info: quante volte è stato aperto il pulsante (i) (possibile segnale di incertezza)
   //  - pagina_nascosta: 1 se durante la risposta la persona è passata a un'altra scheda o app
@@ -2675,7 +2676,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     // attivo = ms accumulati con la schermata visibile; dal = istante in cui il cronometro è ripartito;
     // ultimo = tempo del voto precedente (da lì parte il tempo del voto successivo)
     misura = { n_info: 0, nascosta: inPausaSchermo() ? 1 : 0, attivo: 0, dal: inPausaSchermo() ? null : performance.now(),
-               ultimo: 0, ordine: [], rt: {}, ts: {}, cambi: { valenza: [], arousal: [] } };
+               ultimo: 0, ordine: [], rt: {}, ts: {}, cambi: [] };
   }
   function tempoSchermata() { return misura.attivo + (misura.dal != null ? performance.now() - misura.dal : 0); }
   const SIGLA = { valenza: "V", arousal: "A" };
@@ -2683,10 +2684,8 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     const o = {};
     for (const d of DIMENSIONI) o["rt_" + d + "_ms"] = misura.rt[d] == null ? "" : misura.rt[d];
     for (const d of DIMENSIONI) o["ts_" + d] = misura.ts[d] || "";   // momento esatto del primo tocco su ogni omino
-    for (const d of DIMENSIONI) {                                   // cambi di voto: quanti e quando
-      o["n_cambi_" + d] = misura.cambi[d].length;
-      o["ts_cambi_" + d] = misura.cambi[d].join(" ; ");
-    }
+    o.n_cambi_valenza = misura.cambi.length;                         // cambi di voto della valenza: quanti e quando (ms)
+    o.t_cambi_valenza_ms = misura.cambi.join(" ; ");
     o.n_info = misura.n_info; o.pagina_nascosta = misura.nascosta;
     o.ordine_voti = misura.ordine.map(d => SIGLA[d]).join("-");
     return o;
@@ -2789,7 +2788,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     const adesso = new Date().toISOString();         // istante ESATTO del tocco (UTC, al millisecondo)
     if (votoCorrente[dim]) {                          // scala già votata: è un CAMBIO di voto
       if (votoCorrente[dim] === e.target) return;
-      if (misura) misura.cambi[dim].push(adesso);
+      if (misura && dim === "valenza") misura.cambi.push(Math.round(tempoSchermata()));   // ms dalla comparsa della schermata
     } else if (misura && misura.rt[dim] == null) {   // primo voto di questa scala
       const t = tempoSchermata();
       misura.rt[dim] = Math.round(t - misura.ultimo);

@@ -30,10 +30,10 @@
  *  - rt_valenza_ms, rt_arousal_ms: tempo di ciascun voto (il primo tocco). Le due scale sono
  *    sullo schermo insieme: il tempo di un voto va dal voto precedente (o dalla comparsa della
  *    schermata, per il primo) al tocco della figura; la somma dei due è il tempo della schermata;
- *  - n_cambi_valenza, n_cambi_arousal: quante volte la persona ha CAMBIATO il voto di quella scala
- *    dopo il primo tocco (si può cambiare finché non sono state date entrambe le risposte);
- *  - ts_cambi_valenza, ts_cambi_arousal: istante di ogni cambio, in ora italiana, separati da " ; "
- *    (il primo è il primo cambio, l'ultimo è l'n-esimo; vuota se non ci sono stati cambi).
+ *  - n_cambi_valenza: quante volte la persona ha CAMBIATO il voto della valenza dopo il primo tocco
+ *    (si può cambiare finché non sono state date entrambe le risposte; per l'arousal non si registra);
+ *  - t_cambi_valenza_ms: momento di ogni cambio, in ms dalla comparsa della schermata (come rt_*_ms),
+ *    separati da " ; " (il primo è il primo cambio, l'ultimo è l'n-esimo; vuota se non ci sono cambi).
  *    Il voto salvato nelle colonne valenza / arousal è sempre quello FINALE;
  *  - ordine_voti: ordine in cui sono state scelte le scale la prima volta (es. "V-A");
  *  - n_info: quante volte è stato aperto il pulsante (i);
@@ -85,9 +85,9 @@ const COLONNA_ORDINE = "ordine_voti";
 // Momento ESATTO del (primo) tocco su ogni omino. La web app lo manda in UTC (es. 2026-11-03T14:35:07.412Z);
 // qui viene convertito in ORA ITALIANA (es. 2026-11-03 15:35:07.412), come tutti gli altri orari del foglio.
 const COLONNE_TS = ["ts_valenza", "ts_arousal"];
-// Cambi di voto: per ogni scala, quante volte è stato cambiato (numero) e l'istante di ognuno (testo, separati da " ; ")
-const DIM_CAMBI = ["valenza", "arousal"];
-const COLONNE_CAMBI = ["n_cambi_valenza", "ts_cambi_valenza", "n_cambi_arousal", "ts_cambi_arousal"];
+// Cambi di voto della SOLA valenza: quante volte è stato cambiato (numero) e il momento di ognuno
+// in millisecondi dalla comparsa della schermata, come rt_*_ms (testo, separati da " ; ")
+const COLONNE_CAMBI = ["n_cambi_valenza", "t_cambi_valenza_ms"];
 
 const NOME_FOGLIO = "risposte";
 const INTESTAZIONE = [
@@ -192,18 +192,14 @@ function misure_(r, colonne) {
 function istanti_(r) {
   return COLONNE_TS.map(function (k) { return ora_(r && r[k]); });
 }
-// Cambi di voto, per valenza e arousal: numero di cambi (0 se nessuno) e istanti in ora italiana,
-// separati da " ; ". La web app manda gli istanti come elenco di testi ISO (UTC).
+// Cambi di voto della valenza: numero di cambi (0 se nessuno) e momento di ognuno in ms dalla
+// comparsa della schermata, separati da " ; " (es. "2519 ; 3400"). La web app manda già il testo pronto.
 function cambi_(r) {
-  const out = [];
-  DIM_CAMBI.forEach(function (dim) {
-    let elenco = r && r["ts_cambi_" + dim];
-    if (!Array.isArray(elenco)) elenco = (elenco === undefined || elenco === null || elenco === "") ? [] : String(elenco).split(";");
-    const ore = elenco.map(function (x) { return ora_(String(x).trim()); }).filter(function (x) { return x !== ""; });
-    const n = numero_(r && r["n_cambi_" + dim]);
-    out.push(n === "" ? ore.length : n, ore.join(" ; "));
-  });
-  return out;
+  let elenco = r && r.t_cambi_valenza_ms;
+  if (!Array.isArray(elenco)) elenco = (elenco === undefined || elenco === null || elenco === "") ? [] : String(elenco).split(";");
+  const tempi = elenco.map(function (x) { return numero_(String(x).trim()); }).filter(function (x) { return x !== ""; });
+  const n = numero_(r && r.n_cambi_valenza);
+  return [n === "" ? tempi.length : n, tempi.join(" ; ")];
 }
 // Istante ISO (UTC, come lo manda la web app) → ora italiana "2026-11-03 15:35:07.412" (gestisce da sola ora legale/solare).
 // Se il testo non è una data valida resta com'è.

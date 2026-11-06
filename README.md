@@ -38,7 +38,7 @@ L'elenco delle 90 storie e il motivo della selezione sono in `selezione_90_stori
    letto la frase**, non si dà un voto alla frase.
 6. Finché non sono state date **entrambe** le scale si può **cambiare idea** toccando un'altra figura;
    appena ci sono entrambe si passa automaticamente avanti e la risposta è definitiva. Ogni cambio
-   viene contato e datato (colonne `n_cambi_…` e `ts_cambi_…`).
+   viene contato e datato (solo per la valenza: colonne `n_cambi_valenza` e `t_cambi_valenza_ms`).
 7. Dopo ogni storia: pausa obbligatoria di 20 s con timer, poi di nuovo lo stato d'animo
    (due scale). Dopo l'ultima storia, stato d'animo finale.
 8. Schermata finale con il solo ringraziamento; l'invio delle risposte rimaste è controllato
@@ -120,8 +120,8 @@ dall'apertura del sito all'ultima risposta, pause comprese. Colonne: `inizio`, `
 | `ricevuto` | timestamp di arrivo della risposta nel foglio |
 | `rt_valenza_ms`, `rt_arousal_ms` | tempo di ciascun voto: le due scale sono insieme, quindi va dal voto precedente (o dalla comparsa della schermata, per il primo) al **primo** tocco della figura; la somma dei due è il tempo della schermata (il cronometro si ferma se la pagina viene nascosta). Uguale per frasi e stato d'animo |
 | `ts_valenza`, `ts_arousal` | ora italiana (al millisecondo) del **primo** tocco su ciascuna scala |
-| `n_cambi_valenza`, `n_cambi_arousal` | quante volte la persona ha cambiato il voto di quella scala dopo il primo tocco (0 se mai) |
-| `ts_cambi_valenza`, `ts_cambi_arousal` | ora italiana di ogni cambio, separati da ` ; ` (il primo cambio, …, l'n-esimo); vuota se non ci sono stati cambi. Le colonne `valenza` e `arousal` contengono sempre il voto **finale** |
+| `n_cambi_valenza` | quante volte la persona ha cambiato il voto della valenza dopo il primo tocco (0 se mai); per l'arousal i cambi non si registrano |
+| `t_cambi_valenza_ms` | momento di ogni cambio in ms dalla comparsa della schermata, come `rt_…_ms`, separati da ` ; ` (es. `2519 ; 3400`); vuota se non ci sono stati cambi. Le colonne `valenza` e `arousal` contengono sempre il voto **finale** |
 | `ordine_voti` | ordine in cui sono state scelte le scale la prima volta, es. `V-A` |
 | `n_info` | aperture del pulsante (i) |
 | `pagina_nascosta` | 1 se durante la risposta si è passati ad altra scheda/app (tempi non affidabili) |
