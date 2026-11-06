@@ -2342,7 +2342,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       <h1>Come funziona lo studio</h1>
       <p class="lead">Leggerai <span class="n-storie">6</span> brevi storie che compariranno una frase alla volta.</p>
       <div class="istruzioni">
-        <p>Dopo <b>ogni frase</b> ti chiederemo di descrivere, con tre voti, <b>come ti senti subito dopo averla letta</b>: ascolta il tuo stato d'animo e descrivi quello – se la frase non ti ha fatto nessun effetto, va benissimo dirlo. Non riportare ciò che pensi la frase evochi in altre persone o come si sentono i personaggi, ma <b>come ha fatto sentire te in quel momento</b>. Non ci sono risposte giuste o sbagliate: conta quello che provi.</p>
+        <p>Dopo <b>ogni frase</b> ti chiederemo di valutare <b>come ti ha fatto sentire</b> selezionando l'immagine che meglio descrive la tua emozione: quanto l'emozione indotta dal testo era positiva o negativa, quanto ti senti calmo o eccitato e quanto ti senti in controllo. Non riportare ciò che pensi la frase evochi in altre persone o come si sentono i personaggi o la voce narrante, ma <b>come ha fatto sentire te in quel momento</b>. Non ci sono risposte giuste o sbagliate: conta quello che provi.</p>
       </div>
     </header>
 
@@ -2420,7 +2420,6 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       <p class="lead" id="prova-esito"></p>
     </header>
     <div class="istruzioni">
-      <p>Non esiste una risposta giusta: un'altra persona potrebbe sentirsi in modo diverso, e va benissimo così. Conta solo come ti senti <b>tu</b> dopo averla letta.</p>
       <p>Nello studio farai lo stesso per <b>ogni frase</b>. Se hai un dubbio su una domanda, usa il pulsante <b>i</b> accanto al suo titolo.</p>
     </div>
     <div class="row">
@@ -2432,9 +2431,9 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   <!-- 1c. AVVISO: la prima storia sta per iniziare (dopo il primo stato d'animo) -->
   <div id="s-avviso" class="wrap" style="padding:0" hidden>
     <header style="display:grid;gap:10px">
-      <p class="eyebrow">Ci siamo</p>
-      <h2>La prima storia sta per iniziare</h2>
-      <p class="lead">Ora leggerai la prima storia, <b>una frase alla volta</b>. Dopo ogni frase descrivi come ti senti tu, con le tre scale. Quando sei pronto/a, tocca il pulsante.</p>
+      <p class="eyebrow" id="avviso-eyebrow">Ci siamo</p>
+      <h2 id="avviso-titolo">La prima storia sta per iniziare</h2>
+      <p class="lead" id="avviso-testo">Ora leggerai la prima storia, <b>una frase alla volta</b>. Dopo ogni frase descrivi come ti senti tu, con le tre scale. Quando sei pronto/a, tocca il pulsante.</p>
     </header>
     <div class="row">
       <button class="btn" id="b-avviso-ok" type="button">Inizia la storia</button>
@@ -2458,7 +2457,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
         </svg>
         <span class="sec" id="pausa-sec">20</span>
       </div>
-      <p class="lead">Rilassati e lascia andare la storia che hai appena letto. Quando il tempo finisce ti chiederemo come ti senti.</p>
+      <p class="lead">Rilassati e lascia andare la storia che hai appena letto.</p>
     </div>
   </div>
 
@@ -2528,7 +2527,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   // domande sullo stato d'animo: prima della prima storia, tra una storia e l'altra, alla fine
   // (servono anche ad adattaSchermo, che deve conoscere tutti i testi che possono stare sopra le figure)
   const TESTI_UMORE = [
-    "Prima di iniziare, fermati un momento e ascoltati: come ti senti in questo momento?",
+    "Come ti senti in questo momento?",
     "Prima della prossima storia: come ti senti in questo momento?",
     "Ultima domanda: come ti senti adesso?"
   ];
@@ -2591,8 +2590,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     ? Array.from(new Set(POOL.map(s => s.gruppo))).sort((a, b) => a - b) : null;
   const N_SESSIONE = GRUPPI ? GRUPPI.length * PER_GRUPPO : Math.min(N_STORIE, POOL.length);
   document.querySelectorAll(".n-storie").forEach(el => { el.textContent = N_SESSIONE; });
-  $("pool-info").textContent = POOL.length + " storie nel dataset" +
-    (GRUPPI ? " (" + GRUPPI.length + " gruppi, " + PER_GRUPPO + (PER_GRUPPO === 1 ? " storia" : " storie") + " per gruppo a ogni sessione)" : "");
+  $("pool-info").textContent = "";   // nessuna informazione sul dataset/gruppi ai partecipanti (resta solo l'avviso di sviluppo, se serve)
   // estrazione casuale senza ripetizioni (Fisher–Yates con crypto)
   function randInt(n) {
     const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n;
@@ -3228,14 +3226,20 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
       ...campiMisura()
     });
     // lo stato d'animo non parte da solo: viaggia con il lotto della storia che segue (meno invii al foglio)
-    if (idx === 0) { fidx = 0; mostraAvviso(); }     // dopo il primo stato d'animo: avviso, poi la prima frase
-    else if (idx < n) { fidx = 0; renderFrase(); }
+    if (idx < n) { fidx = 0; mostraAvviso(); }       // dopo ogni stato d'animo: schermata con pulsante, poi la prima frase
     else concludi();
   }
 
   // avviso "la prima storia sta per iniziare": si resta qui finché la persona non tocca il pulsante
   // (il tempo passato sulla pagina si registra in tempi_pagine come "avviso_storia")
   function mostraAvviso() {
+    const prima = idx === 0;
+    $("avviso-eyebrow").textContent = prima ? "Ci siamo" : "Grazie";
+    $("avviso-titolo").textContent = prima ? "La prima storia sta per iniziare" : "La prossima storia sta per iniziare";
+    $("avviso-testo").innerHTML = prima
+      ? "Ora leggerai la prima storia, <b>una frase alla volta</b>. Dopo ogni frase descrivi come ti senti tu, con le tre scale. Quando sei pronto/a, tocca il pulsante."
+      : "Leggerai la prossima storia, <b>una frase alla volta</b>. Quando sei pronto/a, tocca il pulsante.";
+    $("b-avviso-ok").textContent = prima ? "Inizia la storia" : "Clicca qui per cominciare a leggere la prossima storia";
     show("s-avviso");
     fase_ = "avviso"; salvaStato();
     inizioPagina("avviso_storia");
