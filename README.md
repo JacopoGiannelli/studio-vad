@@ -1,7 +1,7 @@
 # Studio VAD – valutazione emotiva di storie (tesi magistrale)
 
-Web app per raccogliere, frase per frase, come si sente chi legge, con le tre scale SAM
-(**valenza, arousal, dominanza**), su storie brevi in prima persona tratte da IDEST
+Web app per raccogliere, frase per frase, come si sente chi legge, con due scale SAM
+(**valenza e arousal**), su storie brevi in prima persona tratte da IDEST
 (Kaakinen et al., 2022, *PLOS ONE*) e tradotte in italiano.
 
 Online su GitHub Pages: https://jacopogiannelli.github.io/studio-vad/
@@ -28,29 +28,31 @@ L'elenco delle 90 storie e il motivo della selezione sono in `selezione_90_stori
 
 0. **Pagina iniziale** breve → pulsante "Compila i questionari".
 1. **Questionari anonimi** (una volta sola): PANAS → STAI-Y1 → BSI-18, uno per pagina.
-2. **Pagina "Come funziona lo studio"**: spiegazione di valenza, arousal e dominanza e delle
+2. **Pagina "Come funziona lo studio"**: spiegazione di valenza e arousal e delle
    istruzioni → pulsante "Inizia".
 3. Frase di prova (non salvata) con riscontro sulle risposte date, ripetibile.
-4. Stato d'animo iniziale (valenza, arousal, dominanza).
-5. 6 storie; ogni frase compare da sola e sotto compaiono **insieme le tre scale SAM**
-   (valenza, arousal, dominanza), senza frasi-domanda. Si descrive **come ci si sente dopo aver
+4. Stato d'animo iniziale (valenza, arousal), poi **avviso "La prima storia sta per iniziare"**
+   con pulsante "Inizia la storia" (il tempo sulla pagina è la riga `avviso_storia` di `tempi_pagine`).
+5. 6 storie; ogni frase compare da sola e sotto compaiono **insieme le due scale SAM**
+   (valenza, arousal), senza frasi-domanda. Si descrive **come ci si sente dopo aver
    letto la frase**, non si dà un voto alla frase.
-6. Ogni scala si **blocca al primo tocco**: non si può cambiare il voto. Quando le tre scale
-   hanno un voto si passa automaticamente avanti.
+6. Finché non sono state date **entrambe** le scale si può **cambiare idea** toccando un'altra figura;
+   appena ci sono entrambe si passa automaticamente avanti e la risposta è definitiva. Ogni cambio
+   viene contato e datato (colonne `n_cambi_…` e `ts_cambi_…`).
 7. Dopo ogni storia: pausa obbligatoria di 20 s con timer, poi di nuovo lo stato d'animo
-   (tre scale). Dopo l'ultima storia, stato d'animo finale.
+   (due scale). Dopo l'ultima storia, stato d'animo finale.
 8. Schermata finale con il solo ringraziamento; l'invio delle risposte rimaste è controllato
    e ritentato in silenzio.
 
-Scale: **valenza da −2 a +2** (0 = neutro), arousal e dominanza da 1 a 5.
+Scale: **valenza da −2 a +2** (0 = neutro), arousal da 1 (calmo) a 5 (eccitato). La **dominanza è stata tolta**.
 Accanto a ogni scala c'è un pulsante **(i)** che riassume il criterio di valutazione.
 Telefono sempre in verticale: su Android (Chrome), al tocco di "Compila i questionari" / "Inizia" /
 "Riprendi" la pagina passa a schermo intero e blocca l'orientamento verticale; su tutti i telefoni,
 se il telefono è in orizzontale la pagina è coperta da un avviso "tieni il telefono in verticale".
 In quei momenti il cronometro dei voti è fermo e la risposta ha `pagina_nascosta` = 1.
-Sulle schermate di voto frase e tre righe di figure stanno sempre nell'altezza dello schermo.
+Sulle schermate di voto frase e due righe di figure stanno sempre nell'altezza dello schermo.
 Le figure hanno una misura FISSA per tutto l'esperimento, che dipende solo dallo schermo: è la più
-grande con cui anche la frase più lunga del dataset + tre righe di figure stanno in verticale senza
+grande con cui anche la frase più lunga del dataset + due righe di figure stanno in verticale senza
 uscire in orizzontale (si ricalcola solo se cambia la finestra). Durante storie, prova e stato d'animo non c'è barra di avanzamento: l'avanzamento (storie completate /
 storie totali) compare solo nella schermata della pausa.
 
@@ -59,11 +61,11 @@ Parametri modificabili in cima allo script di `index.html`: `PER_GRUPPO`, `PAUSA
 
 ## Profilo di lettura (schermata finale)
 
-Come piccolo riconoscimento, la schermata finale mostra uno di **15 profili di lettura**
-(es. "Il Lago Calmo", "Il Surfista"), calcolato **solo dai voti sulle storie e dallo stato
+Come piccolo riconoscimento, la schermata finale mostra uno di **12 profili di lettura**
+(es. "Il Lago Calmo", "Il Raggio di Sole"), calcolato **solo dai voti sulle storie e dallo stato
 d'animo, mai dai questionari**, e dichiarato come gioco, non come valutazione psicologica:
-- **stile** (5): tendenza più forte tra valenza media alta (ottimista), bassa (profondo), arousal
-  alto (intenso), dominanza alta (timoniere), altrimenti equilibrato (soglia 0,25 su scala −1…+1);
+- **stile** (4): tendenza più forte tra valenza media alta (ottimista), bassa (profondo), arousal
+  alto (intenso), altrimenti equilibrato (soglia 0,25 su scala −1…+1);
 - **reattività** (3): cambiamento medio di valenza e arousal tra frasi consecutive (< 0,5 bassa,
   > 1 alta);
 - in più: il ritorno dello stato d'animo dopo le pause rispetto a quello iniziale.
@@ -98,15 +100,15 @@ questionari non li rifà.
 
 Il foglio **tempi_storie** (calcolato da `Code.gs`, una riga per storia di ogni partecipante,
 aggiornata a ogni frase) contiene:
-`tempo_umore_prima_ms` (valenza + arousal + dominanza della domanda "come ti senti" mostrata prima della
-storia), `tempo_frasi_ms` (somma dei tempi di valenza, arousal e dominanza di tutte le frasi),
+`tempo_umore_prima_ms` (valenza + arousal della domanda "come ti senti" mostrata prima della
+storia), `tempo_frasi_ms` (somma dei tempi di valenza e arousal di tutte le frasi),
 `tempo_storia_ms` (la somma dei due) e `n_frasi_votate`. Lo stato d'animo finale non è sommato.
 
 ## Tempo sulle pagine e tempo totale
 
 Il foglio **tempi_pagine** ha una riga per ogni pagina "di passaggio": `intro` (dall'apertura del
 sito a "Compila i questionari"), `spiegazione` (pagina "Come funziona lo studio", fino a "Inizia"),
-`prova` (frase di prova, fino al terzo voto; una riga per tentativo), `riscontro_prova` (fino a
+`prova` (frase di prova, fino al terzo voto; una riga per tentativo), `avviso_storia` (avviso prima della prima storia, fino a "Inizia la storia"), `riscontro_prova` (fino a
 "Inizia lo studio" o "Rifai la prova") e, a fine sessione, **`totale_web_app`**: tempo totale
 dall'apertura del sito all'ultima risposta, pause comprese. Colonne: `inizio`, `fine`,
 `durata_ms` (tempo di orologio), `tentativo`, `pagina_nascosta`.
@@ -116,8 +118,11 @@ dall'apertura del sito all'ultima risposta, pause comprese. Colonne: `inizio`, `
 | colonna | significato |
 |---|---|
 | `ricevuto` | timestamp di arrivo della risposta nel foglio |
-| `rt_valenza_ms`, `rt_arousal_ms`, `rt_dominanza_ms` | tempo di ciascun voto: le tre scale sono insieme, quindi va dal voto precedente (o dalla comparsa della schermata, per il primo) al tocco della figura; la somma dei tre è il tempo della schermata (il cronometro si ferma se la pagina viene nascosta). Uguale per frasi e stato d'animo |
-| `ordine_voti` | ordine in cui sono state scelte le scale, es. `V-A-D` |
+| `rt_valenza_ms`, `rt_arousal_ms` | tempo di ciascun voto: le due scale sono insieme, quindi va dal voto precedente (o dalla comparsa della schermata, per il primo) al **primo** tocco della figura; la somma dei due è il tempo della schermata (il cronometro si ferma se la pagina viene nascosta). Uguale per frasi e stato d'animo |
+| `ts_valenza`, `ts_arousal` | ora italiana (al millisecondo) del **primo** tocco su ciascuna scala |
+| `n_cambi_valenza`, `n_cambi_arousal` | quante volte la persona ha cambiato il voto di quella scala dopo il primo tocco (0 se mai) |
+| `ts_cambi_valenza`, `ts_cambi_arousal` | ora italiana di ogni cambio, separati da ` ; ` (il primo cambio, …, l'n-esimo); vuota se non ci sono stati cambi. Le colonne `valenza` e `arousal` contengono sempre il voto **finale** |
+| `ordine_voti` | ordine in cui sono state scelte le scale la prima volta, es. `V-A` |
 | `n_info` | aperture del pulsante (i) |
 | `pagina_nascosta` | 1 se durante la risposta si è passati ad altra scheda/app (tempi non affidabili) |
 
@@ -139,8 +144,8 @@ di una versione precedente, lo script lo rinomina (`…_vecchio_<data>`) e ne cr
 ## File
 
 - `index.html`: la web app (storie incluse nel file).
-- `Code.gs`: lo script di Google Apps Script che riceve le risposte (versione **v7**: aprendo
-  l'URL `/exec` deve comparire "codice v7"). Su GitHub è solo una copia di riferimento: quello
+- `Code.gs`: lo script di Google Apps Script che riceve le risposte (versione **v8**: aprendo
+  l'URL `/exec` deve comparire "codice v8"). Su GitHub è solo una copia di riferimento: quello
   che conta è il codice incollato in Apps Script e distribuito con "Nuova versione".
 - `storie_IDEST_90.json`: le 90 storie usate, con `gruppo` e `tipo` (StoryType); sono le stesse
   incluse in `index.html`.

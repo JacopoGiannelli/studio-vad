@@ -1,17 +1,18 @@
 /**
  * Apps Script che riceve le risposte della web app VAD e le scrive nel Google Sheet.
- * Versione del codice: v7 (90 storie in 6 gruppi, scale VAD mostrate insieme, valenza da −2 a +2,
- * niente "Indietro", tempi per voto e ordine dei voti, dominanza anche nello stato d'animo,
- * tempo totale per storia, questionari PANAS / STAI / BSI-18, tempo sulle pagine e tempo totale) – v7.
+ * Versione del codice: v8 (90 storie in 6 gruppi, DUE scale mostrate insieme: valenza e arousal,
+ * senza dominanza; voto modificabile finché non sono state date entrambe le risposte, con conteggio
+ * e istanti dei cambi di voto; tempi per voto e ordine dei voti, tempo totale per storia,
+ * questionari PANAS / STAI / BSI-18, tempo sulle pagine e tempo totale) – v8.
  *
  * Le risposte arrivano a "lotti": la web app invia una richiesta POST (JSON) subito dopo
- * ogni risposta, cioè dopo i tre voti di ogni frase, dopo ogni stato d'animo e (quando la web app
+ * ogni risposta, cioè dopo i due voti di ogni frase, dopo ogni stato d'animo e (quando la web app
  * li avrà) alla fine di ogni questionario. Ogni lotto diventa:
  *  - righe nel foglio "risposte": una riga per ogni frase valutata
- *    (valenza da −2 a +2, arousal e dominanza da 1 a 5);
+ *    (valenza da −2 a +2, arousal da 1 a 5);
  *  - righe nel foglio "umore": una riga per ogni rilevazione dello stato d'animo
  *    (protocollo A: all'inizio, dopo la pausa che segue ogni storia, alla fine;
- *    valenza, arousal e dominanza, come per le frasi);
+ *    valenza e arousal, come per le frasi);
  *  - righe nel foglio "questionari": una riga per ogni questionario compilato, con l'istante di
  *    inizio, l'istante di fine e la durata della compilazione;
  *  - i VOTI dei questionari in un foglio per questionario ("voti_PANAS", "voti_STAI-Y1",
@@ -24,21 +25,25 @@
  *    ogni partecipante, con la somma dei tempi di voto (vedi sotto).
  *
  * Per ogni frase e ogni stato d'animo arrivano anche le misure di risposta:
- *  - ts_valenza, ts_arousal, ts_dominanza: istante ESATTO (data e ora UTC al millisecondo) in cui la
- *    persona ha toccato ciascun omino (le tre scale sono nella stessa pagina);
- *  - rt_valenza_ms, rt_arousal_ms, rt_dominanza_ms: tempo di ciascun voto. Le tre scale sono
+ *  - ts_valenza, ts_arousal: istante ESATTO (ora italiana, al millisecondo) del PRIMO tocco su
+ *    ciascun omino (le due scale sono nella stessa pagina);
+ *  - rt_valenza_ms, rt_arousal_ms: tempo di ciascun voto (il primo tocco). Le due scale sono
  *    sullo schermo insieme: il tempo di un voto va dal voto precedente (o dalla comparsa della
- *    schermata, per il primo) al tocco della figura; la somma dei tre è il tempo della schermata.
- *    Il voto è definitivo al primo tocco;
- *  - ordine_voti: ordine in cui sono state scelte le scale (es. "V-A-D");
+ *    schermata, per il primo) al tocco della figura; la somma dei due è il tempo della schermata;
+ *  - n_cambi_valenza, n_cambi_arousal: quante volte la persona ha CAMBIATO il voto di quella scala
+ *    dopo il primo tocco (si può cambiare finché non sono state date entrambe le risposte);
+ *  - ts_cambi_valenza, ts_cambi_arousal: istante di ogni cambio, in ora italiana, separati da " ; "
+ *    (il primo è il primo cambio, l'ultimo è l'n-esimo; vuota se non ci sono stati cambi).
+ *    Il voto salvato nelle colonne valenza / arousal è sempre quello FINALE;
+ *  - ordine_voti: ordine in cui sono state scelte le scale la prima volta (es. "V-A");
  *  - n_info: quante volte è stato aperto il pulsante (i);
  *  - pagina_nascosta: 1 se durante la risposta la persona è passata ad altra scheda o app.
  * La colonna "ricevuto" è il timestamp di arrivo nel foglio.
  *
  * TEMPO PER STORIA (foglio "tempi_storie"), calcolato qui, senza modifiche alla web app:
- *  - tempo_umore_prima_ms = rt_valenza_ms + rt_arousal_ms + rt_dominanza_ms della domanda "come ti senti" mostrata
+ *  - tempo_umore_prima_ms = rt_valenza_ms + rt_arousal_ms della domanda "come ti senti" mostrata
  *    PRIMA di quella storia (all'inizio per la storia 1, dopo la pausa per le altre);
- *  - tempo_frasi_ms = somma di rt_valenza_ms + rt_arousal_ms + rt_dominanza_ms di tutte le frasi
+ *  - tempo_frasi_ms = somma di rt_valenza_ms + rt_arousal_ms di tutte le frasi
  *    della storia;
  *  - tempo_storia_ms = tempo_umore_prima_ms + tempo_frasi_ms.
  * La riga si aggiorna a ogni frase che arriva: a storia finita contiene il totale.
@@ -67,7 +72,7 @@
  * Versione: Nuova versione → Distribuisci (l'URL /exec resta lo stesso).
  */
 
-const VERSIONE_CODICE = "v7";
+const VERSIONE_CODICE = "v8";
 
 // ID del Google Sheet "Risposte studio VAD" (la parte dell'indirizzo tra /d/ e /edit).
 // Serve se lo script NON è stato creato da Estensioni → Apps Script dentro il foglio:
@@ -75,28 +80,31 @@ const VERSIONE_CODICE = "v7";
 const ID_FOGLIO = "1U8CVtfzR4GjcmlcbJHwFXN7Y4bg2x3LxaGHLHW4wMUE";
 
 // Misure di risposta (stessi nomi usati dalla web app): numeri, più l'ordine dei voti (testo)
-const COLONNE_MISURE = ["rt_valenza_ms", "rt_arousal_ms", "rt_dominanza_ms", "n_info", "pagina_nascosta"];
+const COLONNE_MISURE = ["rt_valenza_ms", "rt_arousal_ms", "n_info", "pagina_nascosta"];
 const COLONNA_ORDINE = "ordine_voti";
-// Momento ESATTO del tocco su ogni omino. La web app lo manda in UTC (es. 2026-11-03T14:35:07.412Z);
+// Momento ESATTO del (primo) tocco su ogni omino. La web app lo manda in UTC (es. 2026-11-03T14:35:07.412Z);
 // qui viene convertito in ORA ITALIANA (es. 2026-11-03 15:35:07.412), come tutti gli altri orari del foglio.
-const COLONNE_TS = ["ts_valenza", "ts_arousal", "ts_dominanza"];
+const COLONNE_TS = ["ts_valenza", "ts_arousal"];
+// Cambi di voto: per ogni scala, quante volte è stato cambiato (numero) e l'istante di ognuno (testo, separati da " ; ")
+const DIM_CAMBI = ["valenza", "arousal"];
+const COLONNE_CAMBI = ["n_cambi_valenza", "ts_cambi_valenza", "n_cambi_arousal", "ts_cambi_arousal"];
 
 const NOME_FOGLIO = "risposte";
 const INTESTAZIONE = [
   "ricevuto", "sessione", "inizio", "fine", "ordine_storia", "id_storia", "gruppo", "tipo_storia",
-  "n_frase", "frase", "valenza", "arousal", "dominanza"
-].concat(COLONNE_MISURE, [COLONNA_ORDINE], COLONNE_TS, ["user_agent", "versione", "immagine"]);
+  "n_frase", "frase", "valenza", "arousal"
+].concat(COLONNE_MISURE, [COLONNA_ORDINE], COLONNE_TS, COLONNE_CAMBI, ["user_agent", "versione", "immagine"]);
 
 // Registro dei lotti già scritti (serve a scartare gli invii doppi)
 const NOME_FOGLIO_LOTTI = "lotti";
 const INTESTAZIONE_LOTTI = ["ricevuto", "lotto", "sessione", "righe", "righe_umore"];
 
-// Protocollo A: stato d'animo prima di ogni storia e alla fine (valenza, arousal, dominanza)
+// Protocollo A: stato d'animo prima di ogni storia e alla fine (valenza, arousal)
 const NOME_FOGLIO_UMORE = "umore";
 const INTESTAZIONE_UMORE = [
   "ricevuto", "sessione", "momento", "ordine_storia", "id_storia_precedente",
-  "id_storia_successiva", "pausa_s", "valenza", "arousal", "dominanza"
-].concat(COLONNE_MISURE, [COLONNA_ORDINE], COLONNE_TS, ["user_agent", "versione"]);
+  "id_storia_successiva", "pausa_s", "valenza", "arousal"
+].concat(COLONNE_MISURE, [COLONNA_ORDINE], COLONNE_TS, COLONNE_CAMBI, ["user_agent", "versione"]);
 
 // Tempo totale per storia: una riga per (sessione, storia), aggiornata a ogni frase.
 // "chiave" = sessione|ordine_storia, serve allo script per ritrovare la riga da aggiornare.
@@ -166,9 +174,7 @@ function voto_(v, min, max) {
   return n;
 }
 const valenza_ = function (v) { return voto_(v, -2, 2); };   // −2 … +2 (0 = neutro)
-const scala5_ = function (v) { return voto_(v, 1, 5); };     // 1 … 5 (arousal, dominanza)
-// dominanza dello stato d'animo: le risposte inviate con versioni precedenti della web app non la hanno
-const scala5Facoltativa_ = function (v) { return (v === undefined || v === null || v === "") ? "" : scala5_(v); };
+const scala5_ = function (v) { return voto_(v, 1, 5); };     // 1 … 5 (arousal)
 
 // Numero (anche 0) oppure cella vuota: per le misure, dove 0 è un valore valido
 // (es. pagina_nascosta = 0), a differenza di Number(x) || "" che trasformerebbe 0 in vuoto.
@@ -185,6 +191,19 @@ function misure_(r, colonne) {
 // i tre istanti dei tocchi (testo ISO, come "inizio" e "fine"); vuoti se la web app non li manda
 function istanti_(r) {
   return COLONNE_TS.map(function (k) { return ora_(r && r[k]); });
+}
+// Cambi di voto, per valenza e arousal: numero di cambi (0 se nessuno) e istanti in ora italiana,
+// separati da " ; ". La web app manda gli istanti come elenco di testi ISO (UTC).
+function cambi_(r) {
+  const out = [];
+  DIM_CAMBI.forEach(function (dim) {
+    let elenco = r && r["ts_cambi_" + dim];
+    if (!Array.isArray(elenco)) elenco = (elenco === undefined || elenco === null || elenco === "") ? [] : String(elenco).split(";");
+    const ore = elenco.map(function (x) { return ora_(String(x).trim()); }).filter(function (x) { return x !== ""; });
+    const n = numero_(r && r["n_cambi_" + dim]);
+    out.push(n === "" ? ore.length : n, ore.join(" ; "));
+  });
+  return out;
 }
 // Istante ISO (UTC, come lo manda la web app) → ora italiana "2026-11-03 15:35:07.412" (gestisce da sola ora legale/solare).
 // Se il testo non è una data valida resta com'è.
@@ -203,7 +222,7 @@ function ora_(iso) {
 //  - colonne numeriche → numero semplice (pausa_s con un decimale)
 //  - tutte le altre → testo (le stringhe ISO e gli id non vengono più trasformati in date o numeri)
 const FORMATO_DATAORA = "dd/MM/yyyy HH:mm:ss";
-const RE_NUMERICHE = /^(ordine_storia|gruppo|tipo_storia|n_frase|valenza|arousal|dominanza|rt_.*_ms|n_info|pagina_nascosta|durata_ms|tentativo|n_item|n_frasi_votate|tempo_.*_ms|righe|righe_umore|item_.*)$/;
+const RE_NUMERICHE = /^(ordine_storia|gruppo|tipo_storia|n_frase|valenza|arousal|rt_.*_ms|n_cambi_.*|n_info|pagina_nascosta|durata_ms|tentativo|n_item|n_frasi_votate|tempo_.*_ms|righe|righe_umore|item_.*)$/;
 function formatoColonna_(nome) {
   if (nome === "ricevuto" || nome === "aggiornato") return FORMATO_DATAORA;
   if (nome === "pausa_s") return "0.0";
@@ -353,11 +372,10 @@ function doPost(e) {
         Number(r.n_frase) || "",
         testo_(r.frase, 2000),
         valenza_(r.valenza),
-        scala5_(r.arousal),
-        scala5_(r.dominanza)
+        scala5_(r.arousal)
       ].concat(misure_(r), [
         testo_(r[COLONNA_ORDINE], 20)
-      ], istanti_(r), [
+      ], istanti_(r), cambi_(r), [
         testo_(d.user_agent, 300),
         testo_(d.versione || "testi", 20),
         testo_(r.immagine, 200)
@@ -373,11 +391,10 @@ function doPost(e) {
         testo_(u.id_storia_successiva, 100),
         Number(u.pausa_s) || 0,
         valenza_(u.valenza),
-        scala5_(u.arousal),
-        scala5Facoltativa_(u.dominanza)
+        scala5_(u.arousal)
       ].concat(misure_(u), [
         testo_(u[COLONNA_ORDINE], 20)
-      ], istanti_(u), [
+      ], istanti_(u), cambi_(u), [
         testo_(d.user_agent, 300),
         testo_(d.versione || "testi", 20)
       ]);
@@ -415,7 +432,7 @@ function doPost(e) {
         if (!ordine || u.momento === "fine") return;          // lo stato d'animo finale non è di nessuna storia
         aggiornaTempoStoria_(shTempi, ora, sessione, ordine, {
           id_storia: testo_(u.id_storia_successiva, 100),
-          umore_ms: zero_(u.rt_valenza_ms) + zero_(u.rt_arousal_ms) + zero_(u.rt_dominanza_ms)
+          umore_ms: zero_(u.rt_valenza_ms) + zero_(u.rt_arousal_ms)
         });
       });
       risposte.forEach(function (r) {
@@ -424,7 +441,7 @@ function doPost(e) {
         aggiornaTempoStoria_(shTempi, ora, sessione, ordine, {
           id_storia: testo_(r.id_storia, 100), gruppo: numero_(r.gruppo), tipo_storia: numero_(r.tipo_storia),
           n_frasi: 1,
-          frasi_ms: zero_(r.rt_valenza_ms) + zero_(r.rt_arousal_ms) + zero_(r.rt_dominanza_ms)
+          frasi_ms: zero_(r.rt_valenza_ms) + zero_(r.rt_arousal_ms)
         });
       });
     }
@@ -462,8 +479,8 @@ function doGet() {
   }
   return json_({
     ok: true,
-    messaggio: "Web app VAD attiva (codice " + VERSIONE_CODICE + ": 90 storie, VAD, valenza da -2 a +2, tre scale insieme, " +
-               "dominanza nell'umore, tempi per storia, questionari, tempi delle pagine). Le risposte arrivano via POST.",
+    messaggio: "Web app VAD attiva (codice " + VERSIONE_CODICE + ": 90 storie, valenza da -2 a +2 e arousal, due scale insieme, " +
+               "cambi di voto, tempi per storia, questionari, tempi delle pagine). Le risposte arrivano via POST.",
     foglio: foglio,
     righe: righe
   });
