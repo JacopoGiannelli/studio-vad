@@ -1,6 +1,6 @@
 /**
  * Apps Script che riceve le risposte della web app VAD e le scrive nel Google Sheet.
- * Versione del codice: v10 (90 storie in 6 gruppi, DUE scale (valenza e arousal) o TRE con la dominanza (versione "testi_dom"),
+ * Versione del codice: v11 (come v10 + foglio "feedback" con il commento facoltativo della schermata finale). Storia: v10 (90 storie in 6 gruppi, DUE scale (valenza e arousal) o TRE con la dominanza (versione "testi_dom"),
  * senza dominanza; voto modificabile finché non sono state date entrambe le risposte, con conteggio
  * e istanti dei cambi di voto; tempi per voto e ordine dei voti, tempo totale per storia,
  * questionari PANAS / STAI / BSI-18, tempo sulle pagine e tempo totale; lotti per storia, tempi_storie aggiornato una volta per lotto; colonne della dominanza in fondo a risposte e umore) – v10.
@@ -72,7 +72,7 @@
  * Versione: Nuova versione → Distribuisci (l'URL /exec resta lo stesso).
  */
 
-const VERSIONE_CODICE = "v10";
+const VERSIONE_CODICE = "v11";
 
 // ID del Google Sheet "Risposte studio VAD" (la parte dell'indirizzo tra /d/ e /edit).
 // Serve se lo script NON è stato creato da Estensioni → Apps Script dentro il foglio:
@@ -132,6 +132,10 @@ const NOME_FOGLIO_PAGINE = "tempi_pagine";
 const INTESTAZIONE_PAGINE = [
   "ricevuto", "sessione", "pagina", "tentativo", "inizio", "fine", "durata_ms", "pagina_nascosta", "user_agent", "versione"
 ];
+
+// Commento facoltativo lasciato dal partecipante nella schermata finale (anonimo): una riga per commento
+const NOME_FOGLIO_FEEDBACK = "feedback";
+const INTESTAZIONE_FEEDBACK = ["ricevuto", "sessione", "commento", "user_agent", "versione"];
 
 // Il Google Sheet: quello a cui è collegato lo script, altrimenti quello con ID_FOGLIO.
 function ss_() {
@@ -369,7 +373,8 @@ function doPost(e) {
     if (umore.length > 50) throw new Error("formato non valido (umore)");
     if (questionari.length > 10) throw new Error("formato non valido (questionari)");
     if (pagine.length > 20) throw new Error("formato non valido (pagine)");
-    if (risposte.length === 0 && umore.length === 0 && questionari.length === 0 && pagine.length === 0) throw new Error("lotto vuoto");
+    const commento = testo_(typeof d.feedback === "string" ? d.feedback.trim() : "", 1500);
+    if (risposte.length === 0 && umore.length === 0 && questionari.length === 0 && pagine.length === 0 && !commento) throw new Error("lotto vuoto");
 
     // lotto già ricevuto? allora è un doppio invio: si conferma senza riscrivere
     const lotto = testo_(d.lotto, 100);
@@ -441,6 +446,10 @@ function doPost(e) {
 
     if (righe.length) scrivi_(foglio_(NOME_FOGLIO, INTESTAZIONE), righe, INTESTAZIONE);
     if (righePagine.length) scrivi_(foglio_(NOME_FOGLIO_PAGINE, INTESTAZIONE_PAGINE), righePagine, INTESTAZIONE_PAGINE);
+    if (commento) {
+      scrivi_(foglio_(NOME_FOGLIO_FEEDBACK, INTESTAZIONE_FEEDBACK),
+              [[ora, sessione, commento, testo_(d.user_agent, 300), testo_(d.versione || "testi", 20)]], INTESTAZIONE_FEEDBACK);
+    }
     if (righeUmore.length) scrivi_(foglio_(NOME_FOGLIO_UMORE, INTESTAZIONE_UMORE), righeUmore, INTESTAZIONE_UMORE);
     if (righeQuest.length) {
       scrivi_(foglio_(NOME_FOGLIO_QUEST, INTESTAZIONE_QUEST), righeQuest, INTESTAZIONE_QUEST);
@@ -498,7 +507,7 @@ function doGet() {
     foglio = ss.getName();
     const voti = ss.getSheets().map(function (sh) { return sh.getName(); })
                    .filter(function (n) { return n.indexOf(PREFISSO_VOTI) === 0; });
-    [NOME_FOGLIO, NOME_FOGLIO_UMORE, NOME_FOGLIO_TEMPI, NOME_FOGLIO_PAGINE, NOME_FOGLIO_QUEST].concat(voti, [NOME_FOGLIO_LOTTI])
+    [NOME_FOGLIO, NOME_FOGLIO_UMORE, NOME_FOGLIO_TEMPI, NOME_FOGLIO_PAGINE, NOME_FOGLIO_QUEST, NOME_FOGLIO_FEEDBACK].concat(voti, [NOME_FOGLIO_LOTTI])
       .forEach(function (n) {
         const sh = ss.getSheetByName(n);
         righe[n] = sh ? Math.max(sh.getLastRow() - 1, 0) : "non ancora creato";
@@ -509,7 +518,7 @@ function doGet() {
   return json_({
     ok: true,
     messaggio: "Web app VAD attiva (codice " + VERSIONE_CODICE + ": 90 storie, valenza da -2 a +2 e arousal, due scale insieme, " +
-               "cambi di voto, tempi per storia, questionari, tempi delle pagine). Le risposte arrivano via POST.",
+               "cambi di voto, tempi per storia, questionari, tempi delle pagine, commenti). Le risposte arrivano via POST.",
     foglio: foglio,
     righe: righe
   });

@@ -2213,7 +2213,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
 
     <div class="row" id="riga-inizia">
       <button class="btn" id="b-start" type="button">Compila i questionari</button>
-      <span class="note" id="pool-info"></span>
+      <button class="btn" id="b-debug" type="button" hidden style="background:var(--warn);border-color:var(--warn)">DEBUG · salta ai test</button>      <span class="note" id="pool-info"></span>
     </div>
 
   </div>
@@ -2396,7 +2396,15 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     <!-- condivisione del link dello studio con i propri contatti (WhatsApp ecc.) -->
     <div class="salva" id="condividi-studio">
       <button class="btn" id="b-condividi" type="button">Condividi lo studio con i tuoi contatti</button>
+      <button class="btn ghost" id="b-copia" type="button">Copia il testo dell'invito con il link</button>
       <p class="note" id="condividi-esito" aria-live="polite"></p>
+    </div>
+    <!-- commento facoltativo e anonimo: parte da solo al foglio "feedback" solo se la persona preme il pulsante -->
+    <div class="salva" id="feedback-box">
+      <label for="feedback-testo"><b>Vuoi lasciarci un commento? (facoltativo)</b></label>
+      <textarea id="feedback-testo" class="dump" maxlength="1500" rows="4" style="min-height:6rem;font:inherit" placeholder="Scrivi qui un commento sullo studio, se vuoi."></textarea>
+      <button class="btn ghost" id="b-feedback" type="button">Invia il commento</button>
+      <p class="note" id="feedback-esito" aria-live="polite">Il commento è anonimo.</p>
     </div>
     <!-- compare solo se, dopo alcuni tentativi, qualche risposta non è ancora arrivata al foglio -->
     <p class="note" id="invio-avviso" hidden>Alcune risposte non sono ancora state inviate: controlla la connessione e lascia aperta questa pagina ancora qualche istante.</p>
@@ -2435,7 +2443,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   const COLONNE_MISURE = ["rt_valenza_ms", "rt_arousal_ms", "rt_dominanza_ms", "n_info", "pagina_nascosta", "ordine_voti", "ts_valenza", "ts_arousal", "ts_dominanza",
                           "n_cambi_valenza", "t_cambi_valenza_ms"];
   // con ?debug alla fine dell'indirizzo compare in basso l'esito di ogni invio al foglio
-  const DEBUG = false;   // riquadro di controllo rimosso
+  const DEBUG = /[?&]debug\b/.test(location.search);
 
   // ---------- telefono in verticale ----------
   // ORIZZONTALE: vero quando un telefono è girato in orizzontale (stessa condizione del CSS di #ruota).
@@ -3078,8 +3086,24 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     inizioPagina("intro", T_APERTURA);
     finePagina("intro");
   });
-  $("b-inizia").addEventListener("click", () => { bloccaVerticale(); finePagina("spiegazione"); avviaProva(); });
-  $("b-prova-rifai").addEventListener("click", () => { finePagina("riscontro_prova"); avviaProva(); });
+  // DEBUG (solo con ?debug alla fine dell'indirizzo): salta i questionari e va direttamente alla pagina
+  // "Come funziona lo studio", così si può provare la parte dell'esperimento senza compilarli ogni volta.
+  // Attenzione: i dati di questa sessione di prova arrivano comunque nel foglio (senza i questionari).
+  if (DEBUG) {
+    const bd = $("b-debug");
+    bd.hidden = false;
+    bd.addEventListener("click", () => {
+      bloccaVerticale();
+      if (POOL.length === 0) { $("pool-info").textContent = "Nessuna storia caricata nel dataset."; return; }
+      sessione.inizio = new Date().toISOString();
+      coda = []; nLotto = 0; umoreInviato = 0;
+      sessione.apertura = T_APERTURA;
+      inizioPagina("intro", T_APERTURA);
+      finePagina("intro");
+      fineQuestionari();                                 // → pagina "Come funziona lo studio"
+    });
+  }
+  $("b-inizia").addEventListener("click", () => { bloccaVerticale(); finePagina("spiegazione"); avviaProva(); });  $("b-prova-rifai").addEventListener("click", () => { finePagina("riscontro_prova"); avviaProva(); });
 
   // inizio dello studio vero, dopo la prova
   $("b-prova-ok").addEventListener("click", () => {
@@ -3262,7 +3286,8 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     lotto: l.lotto,
     sessione: sessione.id, inizio: sessione.inizio, fine: sessione.fine || "",
     user_agent: navigator.userAgent, versione: VERSIONE,
-    risposte: l.risposte, umore: l.umore, questionari: l.questionari || [], pagine: l.pagine || []
+    risposte: l.risposte, umore: l.umore, questionari: l.questionari || [], pagine: l.pagine || [],
+    feedback: l.feedback || ""
   });
   async function inviaLotto(l) {
     const res = await fetch(APPS_SCRIPT_URL, {
@@ -3672,26 +3697,49 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     }
   });
 
-  // condivisione del link dello studio: menu di condivisione del telefono (WhatsApp, Telegram, SMS…);
-  // dove non c'è, si copia il link negli appunti. Si condivide solo l'indirizzo della pagina, nessun dato.
+  // condivisione dello studio: menu di condivisione del telefono (WhatsApp, Telegram, SMS…) e, in più, un pulsante
+  // che copia il testo dell'invito con il link. Il link sta DENTRO il testo (non nel campo "url"): Telegram, se riceve
+  // anche "url", condivide solo il link e perde il messaggio. Si condivide solo il testo, nessun dato dello studio.
+  const LINK_STUDIO = () => location.origin + location.pathname;
+  const TESTO_INVITO = () => "Ho partecipato a uno studio dell'Università di Pisa sulle emozioni che si provano leggendo brevi storie. Se ti va, partecipa anche tu: " + LINK_STUDIO();
+  function copiaInvito() {
+    const esito = $("condividi-esito"), t = TESTO_INVITO();
+    const ok = () => { esito.textContent = "Testo copiato: incollalo dove vuoi (Telegram, WhatsApp, e-mail…)."; };
+    const no = () => { esito.textContent = "Copia questo testo: " + t; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, no); else no();
+  }
+  $("b-copia").addEventListener("click", copiaInvito);
   $("b-condividi").addEventListener("click", () => {
-    const esito = $("condividi-esito");
-    const link = location.origin + location.pathname;
-    const testo = "Ho partecipato a uno studio dell'Università di Pisa sulle emozioni che si provano leggendo brevi storie. Se ti va, partecipa anche tu:";
-    esito.textContent = "";
-    const copia = () => {
-      const ok = () => { esito.textContent = "Link copiato: incollalo dove vuoi (WhatsApp, e-mail…)."; };
-      const no = () => { esito.textContent = "Copia questo link: " + link; };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(ok, no); else no();
-    };
+    $("condividi-esito").textContent = "";
     if (navigator.share) {
-      navigator.share({ title: "Studio sulle emozioni · Università di Pisa", text: testo, url: link }).catch(e => {
+      navigator.share({ title: "Studio sulle emozioni · Università di Pisa", text: TESTO_INVITO() }).catch(e => {
         if (e && e.name === "AbortError") return;       // chiuso il menu: nessun problema
-        copia();
+        copiaInvito();
       });
-    } else copia();
+    } else copiaInvito();
   });
 
+  // commento facoltativo e anonimo (schermata finale): parte solo se la persona preme "Invia il commento".
+  // Viaggia come lotto a parte (campo "feedback"); fino a 3 tentativi, poi si può riprovare.
+  let feedbackInviato = false;
+  $("b-feedback").addEventListener("click", async () => {
+    const campo = $("feedback-testo"), esito = $("feedback-esito"), b = $("b-feedback");
+    const t = campo.value.trim();
+    if (!t) { esito.textContent = "Scrivi prima il tuo commento."; return; }
+    if (feedbackInviato) return;
+    b.disabled = true; esito.textContent = "Invio in corso…";
+    const l = { lotto: sessione.id + "-feedback", risposte: [], umore: [], questionari: [], pagine: [], feedback: t };
+    for (let k = 0; k < 3; k++) {
+      try {
+        await inviaLotto(l);
+        feedbackInviato = true; campo.disabled = true;
+        esito.textContent = "Grazie, il commento è stato inviato.";
+        return;
+      } catch (e) { await new Promise(r => setTimeout(r, 1500)); }
+    }
+    b.disabled = false;
+    esito.textContent = "Non sono riuscito a inviare il commento: controlla la connessione e riprova.";
+  });
   async function concludi() {
     sessione.fine = new Date().toISOString();
     $("p-bar").style.width = "100%";

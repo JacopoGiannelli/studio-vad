@@ -152,8 +152,8 @@ di una versione precedente, lo script lo rinomina (`…_vecchio_<data>`) e ne cr
 
 - `index.html`: la web app (storie incluse nel file), con due scale (valenza e arousal).
 - `index_dominanza.html`: la stessa web app con tre scale (aggiunge la dominanza), vedi sotto.
-- `Code.gs`: lo script di Google Apps Script che riceve le risposte (versione **v10**: aprendo
-  l'URL `/exec` deve comparire "codice v10"). Su GitHub è solo una copia di riferimento: quello
+- `Code.gs`: lo script di Google Apps Script che riceve le risposte (versione **v11**: aprendo
+  l'URL `/exec` deve comparire "codice v11"). Su GitHub è solo una copia di riferimento: quello
   che conta è il codice incollato in Apps Script e distribuito con "Nuova versione".
 - `storie_IDEST_90.json`: le 90 storie usate, con `gruppo` e `tipo` (StoryType); sono le stesse
   incluse in `index.html`.
@@ -161,6 +161,12 @@ di una versione precedente, lo script lo rinomina (`…_vecchio_<data>`) e ne cr
 - `storie_IDEST_it.json`: tutte le 196 storie IDEST tradotte (≥ 900 caratteri). Le 4 storie
   reintegrate nei gruppi 4 e 5 (SW022, SW023, SW024, FR37) non sono in questo file perché in
   italiano sono sotto i 900 caratteri.
+
+## Condivisione e commento (schermata finale)
+
+Il pulsante **Condividi lo studio** apre il menu di condivisione del telefono con il testo dell invito e il link nello stesso messaggio (cosi Telegram non perde il testo); **Copia il testo dell invito con il link** lo copia negli appunti. Sotto c e un campo **commento facoltativo e anonimo**: parte solo se la persona preme Invia il commento e finisce nel foglio **feedback** (colonne ricevuto, sessione, commento, user_agent, versione), che richiede Code.gs v11.
+
+Con ?debug alla fine dell indirizzo compare il pulsante **DEBUG - salta ai test**, che salta i questionari iniziali (i dati della prova arrivano comunque nel foglio).
 
 ## Profilo come immagine
 
@@ -174,7 +180,7 @@ Copia della web app con **tre scale SAM** (valenza, arousal e **dominanza**, da 
 (stessi questionari, stesse storie, stesso salvataggio per storia, stessa schermata finale). Online all'indirizzo
 https://jacopogiannelli.github.io/studio-vad/index_dominanza.html (accanto a `index.html`, che resta con due scale).
 
-- Scrive **nello stesso Google Sheet** e con lo stesso `Code.gs` (v10). La colonna `versione` distingue le due
+- Scrive **nello stesso Google Sheet** e con lo stesso `Code.gs` (v11). La colonna `versione` distingue le due
   web app: `testi` (due scale) e `testi_dom` (tre scale).
 - Per la dominanza `Code.gs` aggiunge **in fondo** ai fogli `risposte` e `umore` tre colonne: `dominanza`,
   `rt_dominanza_ms` (tempo del primo tocco) e `ts_dominanza` (ora del tocco). Per la versione a due scale restano
