@@ -5,7 +5,7 @@ Web app per raccogliere, frase per frase, come si sente chi legge, con due scale
 (Kaakinen et al., 2022, *PLOS ONE*) e tradotte in italiano.
 
 Online su GitHub Pages: https://jacopogiannelli.github.io/studio-vad/
-(aggiungendo `?debug` all'indirizzo compare in basso l'esito di ogni invio al foglio).
+
 
 ## Storie
 
@@ -166,7 +166,6 @@ di una versione precedente, lo script lo rinomina (`…_vecchio_<data>`) e ne cr
 
 Il pulsante **Condividi lo studio** apre il menu di condivisione del telefono con il testo dell invito e il link nello stesso messaggio (cosi Telegram non perde il testo); **Copia il testo dell invito con il link** lo copia negli appunti. Sotto c e un campo **commento facoltativo e anonimo**: parte solo se la persona preme Invia il commento e finisce nel foglio **feedback** (colonne ricevuto, sessione, commento, user_agent, versione), che richiede Code.gs v11.
 
-Con ?debug alla fine dell indirizzo compare il pulsante **DEBUG - salta ai test**, che salta i questionari iniziali (i dati della prova arrivano comunque nel foglio).
 
 ## Profilo come immagine
 

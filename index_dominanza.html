@@ -2213,7 +2213,6 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
 
     <div class="row" id="riga-inizia">
       <button class="btn" id="b-start" type="button">Compila i questionari</button>
-      <button class="btn" id="b-debug" type="button" hidden style="background:var(--warn);border-color:var(--warn)">DEBUG · salta ai test</button>      <span class="note" id="pool-info"></span>
     </div>
 
   </div>
@@ -2240,7 +2239,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     <header class="block" style="display:grid;gap:10px">
       <p class="eyebrow">Questionari completati · grazie!</p>
       <h1>Come funziona lo studio</h1>
-      <p class="lead">Leggerai <span class="n-storie">6</span> brevi storie che compariranno una frase alla volta.</p>
+      <p class="lead">Leggerai <span class="n-storie">6</span> brevi storie che compariranno una frase alla volta e che potrebbero indurti varie emozioni.</p>
       <div class="istruzioni">
         <p>Dopo <b>ogni frase</b> ti chiederemo di valutare <b>come ti ha fatto sentire</b> selezionando l'immagine che meglio descrive la tua emozione: quanto l'emozione indotta dal testo era positiva o negativa, quanto ti senti calmo o eccitato e quanto ti senti in controllo. Non riportare ciò che pensi la frase evochi in altre persone o come si sentono i personaggi o la voce narrante, ma <b>come ha fatto sentire te in quel momento</b>. Non ci sono risposte giuste o sbagliate: conta quello che provi.</p>
       </div>
@@ -2442,8 +2441,7 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
   // misure registrate per ogni frase e ogni stato d'animo, oltre ai voti (stesse colonne nel foglio)
   const COLONNE_MISURE = ["rt_valenza_ms", "rt_arousal_ms", "rt_dominanza_ms", "n_info", "pagina_nascosta", "ordine_voti", "ts_valenza", "ts_arousal", "ts_dominanza",
                           "n_cambi_valenza", "t_cambi_valenza_ms"];
-  // con ?debug alla fine dell'indirizzo compare in basso l'esito di ogni invio al foglio
-  const DEBUG = /[?&]debug\b/.test(location.search);
+  const DEBUG = false;   // riquadro di controllo e scorciatoia per saltare i questionari rimossi
 
   // ---------- telefono in verticale ----------
   // ORIZZONTALE: vero quando un telefono è girato in orizzontale (stessa condizione del CSS di #ruota).
@@ -3086,23 +3084,6 @@ textarea.dump { width: 100%; min-height: 9rem; font: .8rem/1.4 var(--font-mono);
     inizioPagina("intro", T_APERTURA);
     finePagina("intro");
   });
-  // DEBUG (solo con ?debug alla fine dell'indirizzo): salta i questionari e va direttamente alla pagina
-  // "Come funziona lo studio", così si può provare la parte dell'esperimento senza compilarli ogni volta.
-  // Attenzione: i dati di questa sessione di prova arrivano comunque nel foglio (senza i questionari).
-  if (DEBUG) {
-    const bd = $("b-debug");
-    bd.hidden = false;
-    bd.addEventListener("click", () => {
-      bloccaVerticale();
-      if (POOL.length === 0) { $("pool-info").textContent = "Nessuna storia caricata nel dataset."; return; }
-      sessione.inizio = new Date().toISOString();
-      coda = []; nLotto = 0; umoreInviato = 0;
-      sessione.apertura = T_APERTURA;
-      inizioPagina("intro", T_APERTURA);
-      finePagina("intro");
-      fineQuestionari();                                 // → pagina "Come funziona lo studio"
-    });
-  }
   $("b-inizia").addEventListener("click", () => { bloccaVerticale(); finePagina("spiegazione"); avviaProva(); });  $("b-prova-rifai").addEventListener("click", () => { finePagina("riscontro_prova"); avviaProva(); });
 
   // inizio dello studio vero, dopo la prova
